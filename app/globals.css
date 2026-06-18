@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply text-gray-900 antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors font-medium;
+  }
+  .btn-accent {
+    @apply bg-accent text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors font-medium;
+  }
+}
