@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     description: product.metaDesc || product.description.slice(0, 160),
     openGraph: {
       images: product.images[0] ? [product.images[0]] : [],
-      type: 'product',
+      type: 'website',
     },
     alternates: {
       canonical: `/products/${product.slug}/`,
