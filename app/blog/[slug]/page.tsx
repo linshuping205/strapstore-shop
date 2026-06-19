@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { getPrismaClient } from '@/lib/prisma';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -6,6 +6,7 @@ import type { Metadata } from 'next';
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
+  const prisma = getPrismaClient();
   const posts = await prisma.post.findMany({
     where: { published: true },
     select: { slug: true },
@@ -14,6 +15,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const prisma = getPrismaClient();
   const post = await prisma.post.findUnique({ where: { slug: params.slug } });
   if (!post) return { title: 'Not Found' };
   return {
@@ -24,6 +26,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
+  const prisma = getPrismaClient();
   const post = await prisma.post.findUnique({ where: { slug: params.slug } });
   if (!post || !post.published) notFound();
 
