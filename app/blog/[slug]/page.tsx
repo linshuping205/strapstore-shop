@@ -14,7 +14,6 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const prisma = getPrismaClient();
   const post = await prisma.post.findUnique({ where: { slug: params.slug } });
   if (!post) return { title: 'Not Found' };
   return {
@@ -25,7 +24,6 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
-  const prisma = getPrismaClient();
   const post = await prisma.post.findUnique({ where: { slug: params.slug } });
   if (!post || !post.published) notFound();
 
