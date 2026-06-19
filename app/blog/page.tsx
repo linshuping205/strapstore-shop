@@ -1,46 +1,52 @@
 import { prisma } from '@/lib/prisma';
-import Image from 'next/image';
 import Link from 'next/link';
-import type { Metadata } from 'next';
+import Image from 'next/image';
 
-export const metadata: Metadata = {
-  title: 'Journal',
-  description: 'Expert guides on watch straps, care tips, and style inspiration.',
-};
-
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export default async function BlogPage() {
-  const posts = await prisma.post.findMany({
-    where: { published: true },
-    orderBy: { createdAt: 'desc' },
-  });
+  let posts = [];
+  
+  try {
+    posts = await prisma.post.findMany({
+      where: { published: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  } catch (error) {
+    console.error('Failed to fetch posts:', error);
+  }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold mb-2">Journal</h1>
-      <p className="text-gray-500 mb-8">Expert guides and style inspiration</p>
-      <div className="grid md:grid-cols-3 gap-8">
-        {posts.map((post) => (
-          <article key={post.id} className="group">
-            <Link href={`/blog/${post.slug}/`}>
-              <div className="aspect-[16/9] bg-gray-100 rounded-lg mb-4 overflow-hidden">
+    <div className="max-w-7xl mx-auto px-4 py-12">
+      <h1 className="text-3xl font-bold mb-8">Blog</h1>
+      
+      {posts.length === 0 ? (
+        <p className="text-gray-500">No posts available.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {posts.map((post) => (
+            <Link key={post.id} href={`/blog/${post.slug}/`} className="block">
+              <article className="border rounded-lg overflow-hidden hover:shadow-lg transition">
                 {post.coverImage && (
                   <Image
                     src={post.coverImage}
                     alt={post.title}
-                    width={600}
-                    height={340}
-                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                    width={400}
+                    height={250}
+                    className="w-full h-48 object-cover"
                   />
                 )}
-              </div>
-              <h3 className="font-semibold text-lg group-hover:text-accent transition-colors">{post.title}</h3>
-              <p className="text-gray-500 text-sm mt-2 line-clamp-2">{post.excerpt}</p>
+                <div className="p-4">
+                  <h2 className="text-xl font-semibold mb-2">{post.title}</h2>
+                  <p className="text-gray-600 text-sm line-clamp-2">
+                    {post.excerpt || post.content.slice(0, 100)}
+                  </p>
+                </div>
+              </article>
             </Link>
-          </article>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -3,41 +3,43 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
-  const posts = await prisma.post.findMany({
-    where: { published: true },
-    select: { slug: true },
-  });
-  return posts.map((p: { slug: string }) => ({ slug: p.slug }));
+  return [];
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const post = await prisma.post.findUnique({ where: { slug: params.slug } });
-  if (!post) return { title: 'Not Found' };
-  return {
-    title: post.metaTitle || post.title,
-    description: post.metaDesc || post.excerpt || post.content.slice(0, 160),
-    alternates: { canonical: `/blog/${post.slug}/` },
-  };
+  try {
+    const post = await prisma.post.findUnique({ where: { slug: params.slug } });
+    if (!post) return { title: 'Not Found' };
+    return {
+      title: post.metaTitle || post.title,
+      description: post.metaDesc || post.excerpt || post.content.slice(0, 160),
+      alternates: { canonical: `/blog/${post.slug}/` },
+    };
+  } catch {
+    return { title: 'Blog' };
+  }
 }
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = await prisma.post.findUnique({ where: { slug: params.slug } });
-  if (!post || !post.published) notFound();
+  try {
+    const post = await prisma.post.findUnique({ where: { slug: params.slug } });
+    if (!post || !post.published) notFound();
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
-    headline: post.title,
-    description: post.excerpt,
-    image: post.coverImage,
-    datePublished: post.createdAt.toISOString(),
-    dateModified: post.updatedAt.toISOString(),
-  };
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: post.title,
+      description: post.excerpt,
+      image: post.coverImage,
+      datePublished: post.createdAt.toISOString(),
+      dateModified: post.updatedAt.toISOString(),
+    };
 
-  return (
+    return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
