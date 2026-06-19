@@ -1,33 +1,42 @@
-import { prisma } from '@/lib/prisma';
-import { MetadataRoute } from 'next';
+﻿import { prisma } from '@/lib/prisma'
+import type { MetadataRoute } from 'next'
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://your-domain.com';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://strapstore-shop.vercel.app'
+  const routes: MetadataRoute.Sitemap = [
+    { url: baseUrl, lastModified: new Date() },
+    { url: `${baseUrl}/products`, lastModified: new Date() },
+    { url: `${baseUrl}/blog`, lastModified: new Date() },
+  ]
 
-  const products = await prisma.product.findMany({ where: { isActive: true }, select: { slug: true, updatedAt: true } });
-  const posts = await prisma.post.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } });
+  try {
+    const products = await prisma.product.findMany({ select: { slug: true, updatedAt: true } })
+    products.forEach((p) => {
+      routes.push({
+        url: `${baseUrl}/products/${p.slug}/`,
+        lastModified: p.updatedAt,
+      })
+    })
+  } catch {
+    // Database not available during build
+  }
 
-  const productUrls = products.map((p) => ({
-    url: `${baseUrl}/products/${p.slug}/`,
-    lastModified: p.updatedAt,
-    changeFrequency: 'weekly' as const,
-    priority: 0.8,
-  }));
+  try {
+    const posts = await prisma.post.findMany({
+      where: { published: true },
+      select: { slug: true, updatedAt: true }
+    })
+    posts.forEach((p) => {
+      routes.push({
+        url: `${baseUrl}/blog/${p.slug}/`,
+        lastModified: p.updatedAt,
+      })
+    })
+  } catch {
+    // Database not available during build
+  }
 
-  const postUrls = posts.map((p) => ({
-    url: `${baseUrl}/blog/${p.slug}/`,
-    lastModified: p.updatedAt,
-    changeFrequency: 'monthly' as const,
-    priority: 0.6,
-  }));
-
-  return [
-    { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
-    { url: `${baseUrl}/products/`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
-    { url: `${baseUrl}/blog/`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
-    ...productUrls,
-    ...postUrls,
-  ];
+  return routes
 }
