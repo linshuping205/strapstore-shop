@@ -1,11 +1,12 @@
 export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getPrismaClient } from '@/lib/prisma'
 
 export async function GET() {
   try {
-    const prisma = getPrismaClient()
+    const { PrismaClient } = await import('@prisma/client')
+    const prisma = new PrismaClient()
+    
     const orders = await prisma.order.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
@@ -14,6 +15,8 @@ export async function GET() {
         }
       }
     })
+    
+    await prisma.$disconnect()
     return NextResponse.json(orders)
   } catch (error) {
     console.error('Orders error:', error)
@@ -24,13 +27,17 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const prisma = getPrismaClient()
+    const { PrismaClient } = await import('@prisma/client')
+    const prisma = new PrismaClient()
+    
     const order = await prisma.order.create({
       data: {
         ...body,
         status: 'pending'
       }
     })
+    
+    await prisma.$disconnect()
     return NextResponse.json(order, { status: 201 })
   } catch (error) {
     console.error('Create order error:', error)
