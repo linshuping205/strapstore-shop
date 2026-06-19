@@ -6,7 +6,6 @@ import type { Metadata } from 'next';
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
-  const prisma = getPrismaClient();
   const posts = await prisma.post.findMany({
     where: { published: true },
     select: { slug: true },
