@@ -7,7 +7,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
-    // 只保留数据库表有的字段
     console.log('Request body:', body)
     
     const data = {
@@ -20,7 +19,7 @@ export async function POST(request: NextRequest) {
       category: body.category || null,
       material: body.material || null,
       sku: body.sku || null,
-      inventory: parseInt(body.inventory) || 0,
+      stock: parseInt(body.stock) || 0,
       metaTitle: body.metaTitle || null,
       metaDesc: body.metaDesc || null,
       tags: [],
