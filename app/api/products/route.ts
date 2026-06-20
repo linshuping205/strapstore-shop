@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       description: body.description || null,
       price: parseFloat(body.price) || 0,
       comparePrice: body.comparePrice ? parseFloat(body.comparePrice) : null,
-      images: body.images ? body.images.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
+      images: body.images || [],
       category: body.category || null,
       material: body.material || null,
       sku: body.sku || null,
