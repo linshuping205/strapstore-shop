@@ -8,6 +8,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     
     // 只保留数据库表有的字段
+    console.log('Request body:', body)
+    
     const data = {
       slug: body.slug,
       name: body.name,
