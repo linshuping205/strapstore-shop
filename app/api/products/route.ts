@@ -7,21 +7,21 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
-    // 处理数据格式
+    // 只保留数据库表有的字段
     const data = {
       slug: body.slug,
       name: body.name,
       description: body.description || null,
       price: parseFloat(body.price) || 0,
       comparePrice: body.comparePrice ? parseFloat(body.comparePrice) : null,
-      images: body.images || [],
+      images: Array.isArray(body.images) ? body.images : (body.images ? body.images.split(',').map((s: string) => s.trim()).filter(Boolean) : []),
       category: body.category || null,
       material: body.material || null,
       sku: body.sku || null,
       inventory: parseInt(body.inventory) || 0,
       metaTitle: body.metaTitle || null,
       metaDesc: body.metaDesc || null,
-      tags: [], // 前端没传，默认空数组
+      tags: [],
       id: body.id || crypto.randomUUID(),
       createdAt: new Date(),
       updatedAt: new Date()
