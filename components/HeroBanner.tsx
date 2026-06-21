@@ -44,7 +44,7 @@ export default function HeroBanner() {
       </div>
 
       {/* 视频控制按钮 - 放在右下角 */}
-      <div className="absolute bottom-8 right-10 z-20 flex gap-3">
+      <div className="absolute bottom-8 right-20 z-20 flex gap-3">
         <button
           onClick={togglePlay}
           className="w-11 h-11 rounded-full border border-gray-900/30 bg-white/60 backdrop-blur-md flex items-center justify-center hover:bg-white/90 hover:border-accent hover:text-accent hover:scale-105 transition-all"
