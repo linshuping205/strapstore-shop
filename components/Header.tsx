@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useCart } from './CartProvider';
-import { ShoppingBag, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Header() {
@@ -11,48 +10,61 @@ export default function Header() {
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <Link href="/" className="text-2xl font-bold tracking-tight text-primary">
-            MASTER<span className="text-accent">STRAP</span>
-          </Link>
-
-          <nav className="hidden md:flex space-x-8">
-            <Link href="/products/" className="text-gray-600 hover:text-accent transition-colors">
-              Shop
-            </Link>
-            <Link href="/blog/" className="text-gray-600 hover:text-accent transition-colors">
-              Journal
-            </Link>
-            <Link href="/cart/" className="relative text-gray-600 hover:text-accent transition-colors">
-              <ShoppingBag className="w-5 h-5" />
-              {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-accent text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
-          </nav>
-
-          <button className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
-            {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+    <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md border-b border-gray-100/60 z-50 transition-all duration-400">
+      <div className="flex items-center justify-between h-[70px] px-8 max-w-[1440px] mx-auto">
+        <div className="flex-1 flex items-center">
+          <button 
+            className="flex items-center gap-2.5 bg-none border-none cursor-pointer text-gray-900 text-sm font-medium tracking-wide uppercase hover:text-accent transition-colors"
+            onClick={() => setMobileOpen(!mobileOpen)}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+            <span className="hidden sm:inline">Menu</span>
           </button>
+        </div>
+
+        <div className="flex-1 flex justify-center items-center">
+          <Link href="/" className="flex flex-col items-center text-gray-900 hover:opacity-80 transition-opacity">
+            <span className="font-heading text-xl sm:text-2xl font-semibold tracking-[3px] leading-none uppercase whitespace-nowrap">
+              MASTER STRAP
+            </span>
+            <span className="text-xs font-normal tracking-[2px] text-gray-400 mt-1 uppercase">
+              Est. 2024
+            </span>
+          </Link>
+        </div>
+
+        <div className="flex-1 flex justify-end items-center gap-5">
+          <Link href="/products/" className="hidden md:flex text-gray-600 hover:text-accent transition-colors text-sm tracking-wide">
+            Shop
+          </Link>
+          <Link href="/blog/" className="hidden md:flex text-gray-600 hover:text-accent transition-colors text-sm tracking-wide">
+            Journal
+          </Link>
+          <Link href="/cart/" className="relative text-gray-900 hover:text-accent transition-colors p-1">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <path d="M16 10a4 4 0 0 1-8 0" />
+            </svg>
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-accent text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+                {cartCount}
+              </span>
+            )}
+          </Link>
         </div>
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100">
-          <div className="px-4 pt-2 pb-4 space-y-1">
-            <Link href="/products/" className="block px-3 py-2 text-gray-600" onClick={() => setMobileOpen(false)}>
-              Shop
-            </Link>
-            <Link href="/blog/" className="block px-3 py-2 text-gray-600" onClick={() => setMobileOpen(false)}>
-              Journal
-            </Link>
-            <Link href="/cart/" className="block px-3 py-2 text-gray-600" onClick={() => setMobileOpen(false)}>
-              Cart ({cartCount})
-            </Link>
+        <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4">
+          <div className="space-y-3">
+            <Link href="/products/" className="block text-gray-600 py-2" onClick={() => setMobileOpen(false)}>Shop</Link>
+            <Link href="/blog/" className="block text-gray-600 py-2" onClick={() => setMobileOpen(false)}>Journal</Link>
+            <Link href="/cart/" className="block text-gray-600 py-2" onClick={() => setMobileOpen(false)}>Cart ({cartCount})</Link>
           </div>
         </div>
       )}
