@@ -64,7 +64,13 @@ export default function Header() {
           <div className="space-y-3">
             <Link href="/products/" className="block text-gray-600 py-2" onClick={() => setMobileOpen(false)}>Shop</Link>
             <Link href="/blog/" className="block text-gray-600 py-2" onClick={() => setMobileOpen(false)}>Journal</Link>
-            <Link href="/cart/" className="block text-gray-600 py-2" onClick={() => setMobileOpen(false)}>Cart ({cartCount})</Link>
+            <Link href="/cart" className="hover:text-gray-600 transition relative" aria-label="Cart">
+               <ShoppingBag className="w-5 h-5" strokeWidth={1.5} />
+               {/* 如果有商品，显示数量 */}
+               <span className="absolute -top-1 -right-1 w-4 h-4 bg-black text-white text-[10px] flex items-center justify-center rounded-full">
+               2
+               </span>
+           </Link>
           </div>
         </div>
       )}
