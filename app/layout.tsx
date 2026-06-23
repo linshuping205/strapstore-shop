@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter, Playfair_Display, Cormorant_Garamond } from 'next/font/google';
 import './globals.css';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+//import Header from '@/components/Header';
+//import Footer from '@/components/Footer';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -66,10 +66,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable} ${cormorant.variable}`}>
-      <body className="font-sans antialiased pt-[70px]">
-        <Header />
-        <main>{children}</main>
-        <Footer />
+      <body className="font-sans antialiased">
+        <main>{children}</main> 
       </body>
     </html>
   );
