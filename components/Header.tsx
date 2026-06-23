@@ -48,7 +48,7 @@ export default function Header() {
             </button>
 
             {/* Lightbulb - 主题/灵感 */}
-            <button className="hover:text-gray-600 transition" aria-label="Theme">
+            //<button className="hover:text-gray-600 transition" aria-label="Theme">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9.529 1.294a1 1 0 0 1 .992 0l5 2.857A1 1 0 0 1 16 5.19v5.62a1 1 0 0 1-.504.868l-5 2.857a1 1 0 0 1-.992 0l-5-2.857A1 1 0 0 1 4 10.81V5.19a1 1 0 0 1 .504-.868l5-2.857ZM12 12v4.5" />
               </svg>
