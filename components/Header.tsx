@@ -70,7 +70,7 @@ export default function Header() {
                <span className="absolute -top-1 -right-1 w-4 h-4 bg-black text-white text-[10px] flex items-center justify-center rounded-full">
                2
                </span>
-           </Link>
+            </Link>
           </div>
         </div>
       )}
