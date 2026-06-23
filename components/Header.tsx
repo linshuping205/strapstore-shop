@@ -37,7 +37,7 @@ export default function Header() {
           </div>
 
           {/* 右侧：图标组（纯 SVG，零依赖） */}
-          <div className="flex items-center justify-end gap-4 md:gap-5 flex-1">
+          <div className="flex items-center justify-end gap-2 md:gap-3 flex-1">
 
             {/* Heart - 收藏 */}
             <button className="hover:text-gray-600 transition" aria-label="Wishlist">
