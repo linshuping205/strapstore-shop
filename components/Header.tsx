@@ -1,70 +1,104 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useCart } from './CartProvider';
-import { useState } from 'react';
+import { useState } from "react";
+import Link from "next/link";
 
 export default function Header() {
-  const items = useCart((state) => state.items);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md border-b border-gray-100/60 z-50 transition-all duration-400">
-      <div className="flex items-center justify-between h-[70px] px-8 max-w-[1440px] mx-auto">
-        <div className="flex-1 flex items-center">
-          <button 
-            className="flex items-center gap-2.5 bg-none border-none cursor-pointer text-gray-900 text-sm font-medium tracking-wide uppercase hover:text-accent transition-colors"
-            onClick={() => setMobileOpen(!mobileOpen)}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
-            <span className="hidden sm:inline">Menu</span>
-          </button>
-        </div>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 md:h-20">
+          
+          {/* 左侧：菜单按钮 */}
+          <div className="flex items-center gap-2 flex-1">
+            <button 
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="flex items-center gap-2 text-sm tracking-widest hover:text-gray-600 transition"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+              <span className="hidden sm:inline">MENU</span>
+            </button>
+          </div>
 
-        <div className="flex-1 flex justify-center items-center">
-          <Link href="/" className="flex flex-col items-center text-gray-900 hover:opacity-80 transition-opacity">
-            <span className="font-heading text-xl sm:text-2xl font-semibold tracking-[3px] leading-none uppercase whitespace-nowrap">
-              MASTER STRAP
-            </span>
-            <span className="text-xs font-normal tracking-[2px] text-gray-400 mt-1 uppercase">
-              Est. 2024
-            </span>
-          </Link>
-        </div>
+          {/* 中间：Logo */}
+          <div className="flex-shrink-0 text-center">
+            <Link href="/" className="block">
+              <h1 className="text-lg md:text-xl font-serif tracking-[0.2em] font-semibold">
+                MASTER STRAP
+              </h1>
+              <p className="text-[10px] md:text-xs tracking-[0.15em] text-gray-500 mt-0.5">
+                EST. 2024
+              </p>
+            </Link>
+          </div>
 
-        <div className="flex-1 flex justify-end items-center gap-5">
-          <Link href="/products/" className="hidden md:flex text-gray-600 hover:text-accent transition-colors text-sm tracking-wide">
-            Shop
-          </Link>
-          <Link href="/blog/" className="hidden md:flex text-gray-600 hover:text-accent transition-colors text-sm tracking-wide">
-            Journal
-          </Link>
-          <Link href="/cart/" className="relative text-gray-900 hover:text-accent transition-colors p-1">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <path d="M16 10a4 4 0 0 1-8 0" />
-            </svg>
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-accent text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
-                {cartCount}
+          {/* 右侧：图标组（纯 SVG，零依赖） */}
+          <div className="flex items-center justify-end gap-4 md:gap-5 flex-1">
+            
+            {/* Globe - 语言 */}
+            <button className="hover:text-gray-600 transition" aria-label="Language">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg>
+            </button>
+
+            {/* Lightbulb - 主题/灵感 */}
+            <button className="hover:text-gray-600 transition" aria-label="Theme">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.529 1.294a1 1 0 0 1 .992 0l5 2.857A1 1 0 0 1 16 5.19v5.62a1 1 0 0 1-.504.868l-5 2.857a1 1 0 0 1-.992 0l-5-2.857A1 1 0 0 1 4 10.81V5.19a1 1 0 0 1 .504-.868l5-2.857ZM12 12v4.5" />
+              </svg>
+            </button>
+
+            {/* Heart - 收藏 */}
+            <button className="hover:text-gray-600 transition" aria-label="Wishlist">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+              </svg>
+            </button>
+
+            {/* User - 账户 */}
+            <button className="hover:text-gray-600 transition" aria-label="Account">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+              </svg>
+            </button>
+
+            {/* Search - 搜索 */}
+            <button className="hover:text-gray-600 transition" aria-label="Search">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+            </button>
+
+            {/* ShoppingBag - 购物车 */}
+            <Link href="/cart" className="hover:text-gray-600 transition relative" aria-label="Cart">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+              </svg>
+              {/* 购物车数量 - 有商品时显示 */}
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-black text-white text-[10px] flex items-center justify-center rounded-full">
+                0
               </span>
-            )}
-          </Link>
+            </Link>
+          </div>
         </div>
       </div>
 
-      {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4">
-          <div className="space-y-3">
-            <Link href="/products/" className="block text-gray-600 py-2" onClick={() => setMobileOpen(false)}>Shop</Link>
-            <Link href="/blog/" className="block text-gray-600 py-2" onClick={() => setMobileOpen(false)}>Journal</Link>
-            <Link href="/cart/" className="block text-gray-600 py-2" onClick={() => setMobileOpen(false)}>Cart ({cartCount})</Link>
+      {/* 下拉菜单 */}
+      {isMenuOpen && (
+        <div className="absolute top-full left-0 w-full bg-white border-b border-gray-100 shadow-lg">
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            <div className="flex flex-col gap-4 text-sm tracking-widest">
+              <Link href="/shop" className="hover:text-gray-600 py-2" onClick={() => setIsMenuOpen(false)}>SHOP</Link>
+              <Link href="/journal" className="hover:text-gray-600 py-2" onClick={() => setIsMenuOpen(false)}>JOURNAL</Link>
+              <Link href="/about" className="hover:text-gray-600 py-2" onClick={() => setIsMenuOpen(false)}>ABOUT</Link>
+              <Link href="/contact" className="hover:text-gray-600 py-2" onClick={() => setIsMenuOpen(false)}>CONTACT</Link>
+            </div>
           </div>
         </div>
       )}
