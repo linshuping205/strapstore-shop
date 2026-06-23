@@ -64,7 +64,7 @@ export default function Header() {
           <div className="space-y-3">
             <Link href="/products/" className="block text-gray-600 py-2" onClick={() => setMobileOpen(false)}>Shop</Link>
             <Link href="/blog/" className="block text-gray-600 py-2" onClick={() => setMobileOpen(false)}>Journal</Link>
-            <Link href="/cart/" className="block text-gray-600 py-2" onClick={() => setMobileopen(false)}>Cart ({cartCount})</Link>
+            <Link href="/cart/" className="block text-gray-600 py-2" onClick={() => setMobileOpen(false)}>Cart ({cartCount})</Link>
           </div>
         </div>
       )}
