@@ -27,8 +27,8 @@ export default function HeroBanner() {
   };
 
   return (
-    <section className="relative h-[75vh] min-h-[480px] flex items-end justify-center overflow-hidden px-10 pt-[70px]">
-      <div className="absolute top-[70px] left-10 right-10 bottom-0 rounded overflow-hidden bg-gray-900">
+    <section className="relative h-[75vh] min-h-[480px] flex items-end justify-center overflow-hidden px-10 pt-0">
+      <div className="absolute top-0 left-10 right-10 bottom-0 rounded overflow-hidden bg-gray-900">
         <video
           ref={videoRef}
           autoPlay
