@@ -36,7 +36,7 @@ export default function HeroBanner() {
           loop
           playsInline
           preload="auto"
-          poster="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=1920&q=80"
+          //poster="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=1920&q=80"
           className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto -translate-x-1/2 -translate-y-1/2 object-cover opacity-90"
         >
           <source src="https://cdn.pixabay.com/video/2024/03/18/204582-925146042_large.mp4" type="video/mp4" />
