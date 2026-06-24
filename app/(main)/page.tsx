@@ -6,7 +6,8 @@ import HeroBanner from '@/components/HeroBanner';
 import Craftsmanship from '@/components/Craftsmanship';
 import Testimonials from '@/components/Testimonials';
 
-export const revalidate = 3600;
+// 动态渲染：不预渲染，避免构建时数据库 schema 不匹配
+export const dynamic = 'force-dynamic';
 
 async function getFeaturedProducts() {
   return prisma.product.findMany({
