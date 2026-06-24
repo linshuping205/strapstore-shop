@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Search, Plus, Pencil, Trash2, X, Eye } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, Plus, Pencil, Trash2, X, Eye, Upload } from 'lucide-react';
 import RichTextEditor from '@/components/blog/RichTextEditor';
 
 interface Post {
@@ -28,6 +28,8 @@ export default function BlogsPage() {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Post | null>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     title: '',
@@ -42,7 +44,6 @@ export default function BlogsPage() {
     metaDesc: '',
   });
 
-  // Load data
   useEffect(() => {
     fetch('/api/admin/posts')
       .then((r) => r.json())
@@ -65,6 +66,42 @@ export default function BlogsPage() {
   const filtered = posts.filter((p) =>
     p.title.toLowerCase().includes(search.toLowerCase())
   );
+
+  const uploadToBlob = async (file: File): Promise<string | null> => {
+    if (file.size > 4 * 1024 * 1024) {
+      alert('Image size cannot exceed 4MB');
+      return null;
+    }
+    setUploadingCover(true);
+    try {
+      const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const res = await fetch(`/api/upload?filename=${encodeURIComponent(filename)}`, {
+        method: 'POST',
+        body: file,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      return data.url;
+    } catch (e) {
+      alert('Upload failed, please try again');
+      console.error(e);
+      return null;
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file');
+      return;
+    }
+    const url = await uploadToBlob(file);
+    if (url) setForm((prev) => ({ ...prev, coverImage: url }));
+    e.target.value = '';
+  };
 
   const openAdd = () => {
     setEditing(null);
@@ -287,17 +324,52 @@ export default function BlogsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Cover Image URL</label>
-                  <input
-                    type="text"
-                    value={form.coverImage}
-                    onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Cover Image</label>
+                <input
+                  type="file"
+                  ref={coverInputRef}
+                  onChange={handleCoverUpload}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => coverInputRef.current?.click()}
+                    disabled={uploadingCover}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  >
+                    {uploadingCover ? (
+                      <span className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Upload size={16} />
+                    )}
+                    {uploadingCover ? 'Uploading...' : 'Upload Image'}
+                  </button>
+                  {form.coverImage && (
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={form.coverImage}
+                        alt="Cover"
+                        className="w-12 h-12 object-cover rounded-lg border border-gray-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, coverImage: '' })}
+                        className="text-xs text-red-500 hover:text-red-700"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
                 </div>
+                {!form.coverImage && (
+                  <p className="text-xs text-gray-400 mt-1">Or leave empty for no cover image</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                   <select
@@ -311,18 +383,17 @@ export default function BlogsPage() {
                     <option>News</option>
                   </select>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
-                <input
-                  type="text"
-                  value={form.tags}
-                  onChange={(e) => setForm({ ...form, tags: e.target.value })}
-                  placeholder="leather, watch, strap, summer"
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
-                <p className="text-xs text-gray-400 mt-1">Comma separated</p>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                  <input
+                    type="text"
+                    value={form.tags}
+                    onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                    placeholder="leather, watch, strap, summer"
+                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Comma separated</p>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
