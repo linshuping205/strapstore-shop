@@ -1,141 +1,130 @@
-import { notFound } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
-import Link from 'next/link';
-import { Metadata } from 'next';
-import PostActions from '@/components/blog/PostActions';
-import PostComments from '@/components/blog/PostComments';
-
 export const dynamic = 'force-dynamic';
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { slug: string };
-}): Promise<Metadata> {
-  try {
-    const post = await prisma.post.findUnique({
-      where: { slug: params.slug },
-    });
-    if (!post) return { title: 'Not Found' };
+import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import { prisma } from '@/lib/prisma';
+import { Suspense } from 'react';
+import BlogPostActions from './BlogPostActions';
+import BlogPostComments from './BlogPostComments';
 
-    return {
-      title: post.metaTitle || post.title,
-      description: post.metaDesc || post.excerpt || '',
-      openGraph: {
-        title: post.title,
-        description: post.metaDesc || post.excerpt || '',
-        images: post.coverImage ? [{ url: post.coverImage }] : [],
-        type: 'article',
-        publishedTime: post.createdAt.toISOString(),
-      },
-    };
-  } catch (error) {
-    console.error('Metadata fetch error:', error);
-    return { title: 'Not Found' };
-  }
+// 静态 metadata 避免 React 并发渲染 Bug
+export const metadata = {
+  title: 'Blog Post',
+  description: 'Read our latest articles and insights',
+};
+
+interface BlogPostPageProps {
+  params: { slug: string };
 }
 
-export default async function BlogPostPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
+// 异步数据加载组件
+async function PostData({ slug }: { slug: string }) {
   try {
-    // 简单查询文章（不使用 include，避免 schema 不匹配）
     const post = await prisma.post.findUnique({
-      where: { slug: params.slug },
+      where: { slug },
     });
 
-    if (!post) {
-      console.log('Post not found for slug:', params.slug);
+    if (!post || !post.published) {
       notFound();
     }
 
-    if (!post.published) {
-      console.log('Post found but not published:', params.slug);
-      notFound();
-    }
-
-    // 单独查询评论数
     let commentCount = 0;
     try {
       commentCount = await prisma.comment.count({
         where: { postId: post.id },
       });
-    } catch {
-      // 如果 Comment 表不存在，忽略
+    } catch (e) {
+      // Comment table may not exist yet
     }
 
     return (
-      <article className="min-h-screen bg-white">
-        <div className="max-w-3xl mx-auto px-4 py-16">
+      <>
+        {/* 文章头部 */}
+        <div className="mb-12">
           <Link
             href="/blog"
-            className="text-sm text-gray-500 hover:text-amber-700 transition-colors mb-8 inline-block"
+            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-800 mb-6 transition-colors"
           >
-            ← Back to Journal
+            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Journal
           </Link>
 
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-xs font-medium text-amber-700 bg-amber-50 px-3 py-1 rounded-full">
-              {post.category}
-            </span>
-            <span className="text-xs text-gray-400">
-              {new Date(post.createdAt).toLocaleDateString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-              })}
-            </span>
-          </div>
-
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 leading-tight">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
             {post.title}
           </h1>
 
+          <div className="flex items-center gap-4 text-sm text-gray-500 mb-6">
+            {post.category && (
+              <span className="px-2 py-1 bg-gray-100 rounded-md text-gray-600">
+                {post.category}
+              </span>
+            )}
+            <span>{new Date(post.createdAt).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}</span>
+          </div>
+
           {post.tags && post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6">
+            <div className="flex flex-wrap gap-2 mb-8">
               {post.tags.map((tag) => (
-                <span key={tag} className="text-xs text-gray-500 bg-gray-50 px-2.5 py-1 rounded">
-                  #{tag}
+                <span key={tag} className="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-full">
+                  {tag}
                 </span>
               ))}
             </div>
           )}
+        </div>
 
-          {post.coverImage && (
-            <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden mb-10">
-              <img
-                src={post.coverImage}
-                alt={post.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
+        {/* 文章内容 */}
+        <div
+          className="prose prose-lg max-w-none mb-12"
+          dangerouslySetInnerHTML={{ __html: post.content }}
+        />
 
-          <PostActions
+        {/* 互动区域 */}
+        <div className="border-t border-gray-200 pt-8">
+          <BlogPostActions
             postId={post.id}
             initialLikes={post.likes || 0}
             initialViews={post.views || 0}
             commentCount={commentCount}
           />
-
-          <div
-            className="prose prose-lg max-w-none 
-              prose-headings:text-gray-900 
-              prose-p:text-gray-600 
-              prose-a:text-amber-700 hover:prose-a:text-amber-800 
-              prose-strong:text-gray-800
-              prose-img:rounded-xl"
-            dangerouslySetInnerHTML={{ __html: post.content || '' }}
-          />
-
-          <PostComments postId={post.id} />
         </div>
-      </article>
+
+        {/* 评论区域 */}
+        <div className="mt-8">
+          <BlogPostComments postId={post.id} />
+        </div>
+      </>
     );
   } catch (error) {
-    console.error('Blog post fetch error:', error);
+    console.error('Error loading post:', error);
     notFound();
   }
+}
+
+export default function BlogPostPage({ params }: BlogPostPageProps) {
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="max-w-4xl mx-auto px-4 py-16">
+        <Suspense fallback={
+          <div className="space-y-8">
+            <div className="h-8 bg-gray-100 rounded animate-pulse w-3/4" />
+            <div className="h-4 bg-gray-100 rounded animate-pulse w-1/2" />
+            <div className="space-y-4">
+              <div className="h-4 bg-gray-100 rounded animate-pulse" />
+              <div className="h-4 bg-gray-100 rounded animate-pulse" />
+              <div className="h-4 bg-gray-100 rounded animate-pulse w-2/3" />
+            </div>
+          </div>
+        }>
+          <PostData slug={params.slug} />
+        </Suspense>
+      </div>
+    </div>
+  );
 }
