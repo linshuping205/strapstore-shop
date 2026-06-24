@@ -2,8 +2,6 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { execSync } from 'child_process';
-import path from 'path';
 
 const seedData = {
   products: [
@@ -85,39 +83,32 @@ export async function GET() {
   const results: string[] = [];
 
   try {
-    // Step 1: 运行时推送数据库表结构（解决 schema 不匹配）
+    // Step 1: 直接使用 SQL 确保 posts 表有 likes 和 views 列
     try {
-      const prismaBin = path.join(process.cwd(), 'node_modules', '.bin', 'prisma');
-      const output = execSync(
-        `"${prismaBin}" db push --accept-data-loss --skip-generate`,
-        {
-          cwd: process.cwd(),
-          env: process.env,
-          timeout: 30000,
-          encoding: 'utf-8',
-        }
-      );
-      results.push('Schema pushed: ' + output.split('\n').slice(-3).join('; '));
+      await prisma.$executeRawUnsafe(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+            WHERE table_name='posts' AND column_name='likes') THEN
+            ALTER TABLE posts ADD COLUMN likes INT DEFAULT 0;
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+            WHERE table_name='posts' AND column_name='views') THEN
+            ALTER TABLE posts ADD COLUMN views INT DEFAULT 0;
+          END IF;
+        END $$;
+      `);
+      results.push('Schema fixed: added likes/views columns if missing');
     } catch (e: any) {
-      results.push('Schema push: ' + (e.stderr || e.message || 'failed').split('\n').slice(-3).join('; '));
+      results.push('Schema fix warning: ' + e.message);
     }
 
     // Step 2: 清理旧数据
-    try {
-      await prisma.comment.deleteMany();
-    } catch { /* ignore */ }
-    try {
-      await prisma.orderItem.deleteMany();
-    } catch { /* ignore */ }
-    try {
-      await prisma.order.deleteMany();
-    } catch { /* ignore */ }
-    try {
-      await prisma.product.deleteMany();
-    } catch { /* ignore */ }
-    try {
-      await prisma.post.deleteMany();
-    } catch { /* ignore */ }
+    try { await prisma.comment.deleteMany(); } catch { /* ignore */ }
+    try { await prisma.orderItem.deleteMany(); } catch { /* ignore */ }
+    try { await prisma.order.deleteMany(); } catch { /* ignore */ }
+    try { await prisma.product.deleteMany(); } catch { /* ignore */ }
+    try { await prisma.post.deleteMany(); } catch { /* ignore */ }
 
     // Step 3: 插入商品
     try {
