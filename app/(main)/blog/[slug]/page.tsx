@@ -13,22 +13,27 @@ export async function generateMetadata({
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const post = await prisma.post.findUnique({
-    where: { slug: params.slug },
-  });
-  if (!post) return { title: 'Not Found' };
+  try {
+    const post = await prisma.post.findUnique({
+      where: { slug: params.slug },
+    });
+    if (!post) return { title: 'Not Found' };
 
-  return {
-    title: post.metaTitle || post.title,
-    description: post.metaDesc || post.excerpt || '',
-    openGraph: {
-      title: post.title,
+    return {
+      title: post.metaTitle || post.title,
       description: post.metaDesc || post.excerpt || '',
-      images: post.coverImage ? [{ url: post.coverImage }] : [],
-      type: 'article',
-      publishedTime: post.createdAt.toISOString(),
-    },
-  };
+      openGraph: {
+        title: post.title,
+        description: post.metaDesc || post.excerpt || '',
+        images: post.coverImage ? [{ url: post.coverImage }] : [],
+        type: 'article',
+        publishedTime: post.createdAt.toISOString(),
+      },
+    };
+  } catch (error) {
+    console.error('Metadata fetch error:', error);
+    return { title: 'Not Found' };
+  }
 }
 
 export default async function BlogPostPage({
@@ -36,16 +41,17 @@ export default async function BlogPostPage({
 }: {
   params: { slug: string };
 }) {
-  const post = await prisma.post.findUnique({
-    where: { slug: params.slug },
-    include: {
-      _count: { select: { comments: true } },
-    },
-  });
+  try {
+    const post = await prisma.post.findUnique({
+      where: { slug: params.slug },
+      include: {
+        _count: { select: { comments: true } },
+      },
+    });
 
-  if (!post || !post.published) {
-    notFound();
-  }
+    if (!post || !post.published) {
+      notFound();
+    }
 
   return (
     <article className="min-h-screen bg-white">
@@ -115,4 +121,8 @@ export default async function BlogPostPage({
       </div>
     </article>
   );
+  } catch (error) {
+    console.error('Blog post fetch error:', error);
+    notFound();
+  }
 }
