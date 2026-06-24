@@ -21,7 +21,8 @@
     "stripe": "^15.0.0",
     "@stripe/stripe-js": "^3.0.0",
     "zustand": "^4.5.0",
-    "lucide-react": "^0.378.0"
+    "lucide-react": "^0.378.0",
+    "@vercel/blob": "^0.23.4"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
