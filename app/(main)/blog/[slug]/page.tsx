@@ -5,13 +5,8 @@ import { Metadata } from 'next';
 import PostActions from '@/components/blog/PostActions';
 import PostComments from '@/components/blog/PostComments';
 
-export async function generateStaticParams() {
-  const posts = await prisma.post.findMany({
-    where: { published: true },
-    select: { slug: true },
-  });
-  return posts.map((p) => ({ slug: p.slug }));
-}
+// 动态渲染：避免构建时数据库 schema 不匹配
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({
   params,
