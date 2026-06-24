@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Search, Plus, Pencil, Trash2, X, Eye } from 'lucide-react';
+import RichTextEditor from '@/components/blog/RichTextEditor';
 
 interface Post {
   id: string;
@@ -279,15 +280,12 @@ export default function BlogsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Content (HTML)</label>
-                <textarea
+                <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                <RichTextEditor
                   value={form.content}
-                  onChange={(e) => setForm({ ...form, content: e.target.value })}
-                  rows={8}
-                  placeholder="<p>Write your article content here...</p>"
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
+                  onChange={(html) => setForm({ ...form, content: html })}
+                  placeholder="Write your article here..."
                 />
-                <p className="text-xs text-gray-400 mt-1">Supports HTML tags</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
