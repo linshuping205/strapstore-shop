@@ -2,6 +2,8 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { execSync } from 'child_process';
+import path from 'path';
 
 const seedData = {
   products: [
@@ -80,30 +82,53 @@ const seedData = {
 };
 
 export async function GET() {
-  try {
-    const results: string[] = [];
+  const results: string[] = [];
 
-    // 清理旧数据（解决 schema 变更导致的不兼容）
+  try {
+    // Step 1: 运行时推送数据库表结构（解决 schema 不匹配）
     try {
-      await prisma.comment.deleteMany();
-      await prisma.orderItem.deleteMany();
-      await prisma.order.deleteMany();
-    } catch {
-      // 表可能不存在，忽略
+      const prismaBin = path.join(process.cwd(), 'node_modules', '.bin', 'prisma');
+      const output = execSync(
+        `"${prismaBin}" db push --accept-data-loss --skip-generate`,
+        {
+          cwd: process.cwd(),
+          env: process.env,
+          timeout: 30000,
+          encoding: 'utf-8',
+        }
+      );
+      results.push('Schema pushed: ' + output.split('\n').slice(-3).join('; '));
+    } catch (e: any) {
+      results.push('Schema push: ' + (e.stderr || e.message || 'failed').split('\n').slice(-3).join('; '));
     }
 
-    // 商品
+    // Step 2: 清理旧数据
+    try {
+      await prisma.comment.deleteMany();
+    } catch { /* ignore */ }
+    try {
+      await prisma.orderItem.deleteMany();
+    } catch { /* ignore */ }
+    try {
+      await prisma.order.deleteMany();
+    } catch { /* ignore */ }
     try {
       await prisma.product.deleteMany();
+    } catch { /* ignore */ }
+    try {
+      await prisma.post.deleteMany();
+    } catch { /* ignore */ }
+
+    // Step 3: 插入商品
+    try {
       await prisma.product.createMany({ data: seedData.products });
       results.push(`Created ${seedData.products.length} products`);
     } catch (e: any) {
       results.push(`Products error: ${e.message}`);
     }
 
-    // 文章
+    // Step 4: 插入文章
     try {
-      await prisma.post.deleteMany();
       await prisma.post.createMany({ data: seedData.posts });
       results.push(`Created ${seedData.posts.length} posts`);
     } catch (e: any) {
@@ -118,7 +143,7 @@ export async function GET() {
   } catch (error: any) {
     console.error('Seed fatal error:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Seed failed' },
+      { success: false, error: error.message || 'Seed failed', details: results },
       { status: 500 }
     );
   }
