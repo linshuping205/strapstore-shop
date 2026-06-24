@@ -13,9 +13,12 @@ interface Post {
   category: string;
   tags: string[];
   published: boolean;
+  likes: number;
+  views: number;
   metaTitle: string | null;
   metaDesc: string | null;
   createdAt: string;
+  _count?: { comments: number };
 }
 
 export default function BlogsPage() {
@@ -151,6 +154,8 @@ export default function BlogsPage() {
                 <th className="px-6 py-3.5">Title</th>
                 <th className="px-6 py-3.5">Slug</th>
                 <th className="px-6 py-3.5">Category</th>
+                <th className="px-6 py-3.5">Likes</th>
+                <th className="px-6 py-3.5">Views</th>
                 <th className="px-6 py-3.5">Date</th>
                 <th className="px-6 py-3.5">Status</th>
                 <th className="px-6 py-3.5 text-right">Actions</th>
@@ -162,6 +167,8 @@ export default function BlogsPage() {
                   <td className="px-6 py-4 font-medium text-gray-900">{post.title}</td>
                   <td className="px-6 py-4 text-gray-500 text-xs font-mono">/{post.slug}</td>
                   <td className="px-6 py-4 text-gray-600">{post.category}</td>
+                  <td className="px-6 py-4 text-gray-600 text-center">{post.likes || 0}</td>
+                  <td className="px-6 py-4 text-gray-600 text-center">{post.views || 0}</td>
                   <td className="px-6 py-4 text-gray-600">
                     {new Date(post.createdAt).toLocaleDateString()}
                   </td>
@@ -199,7 +206,7 @@ export default function BlogsPage() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                  <td colSpan={8} className="px-6 py-12 text-center text-gray-400">
                     No posts found
                   </td>
                 </tr>

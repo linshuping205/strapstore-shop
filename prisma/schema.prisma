@@ -81,10 +81,25 @@ model Post {
   category  String
   tags      String[]
   published Boolean  @default(true)
+  likes     Int      @default(0)
+  views     Int      @default(0)
   metaTitle String?
   metaDesc  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  comments  Comment[]
 
   @@map("posts")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String
+  name      String
+  email     String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
 }

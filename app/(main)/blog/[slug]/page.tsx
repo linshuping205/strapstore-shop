@@ -1,9 +1,10 @@
-﻿import { notFound } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { Metadata } from 'next';
+import PostActions from '@/components/blog/PostActions';
+import PostComments from '@/components/blog/PostComments';
 
-// 构建时生成所有文章路径（SSG）
 export async function generateStaticParams() {
   const posts = await prisma.post.findMany({
     where: { published: true },
@@ -12,7 +13,6 @@ export async function generateStaticParams() {
   return posts.map((p) => ({ slug: p.slug }));
 }
 
-// 动态 SEO 元数据
 export async function generateMetadata({
   params,
 }: {
@@ -43,6 +43,9 @@ export default async function BlogPostPage({
 }) {
   const post = await prisma.post.findUnique({
     where: { slug: params.slug },
+    include: {
+      _count: { select: { comments: true } },
+    },
   });
 
   if (!post || !post.published) {
@@ -96,6 +99,13 @@ export default async function BlogPostPage({
           </div>
         )}
 
+        <PostActions
+          postId={post.id}
+          initialLikes={post.likes}
+          initialViews={post.views}
+          commentCount={post._count.comments}
+        />
+
         <div
           className="prose prose-lg max-w-none 
             prose-headings:text-gray-900 
@@ -105,6 +115,8 @@ export default async function BlogPostPage({
             prose-img:rounded-xl"
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
+
+        <PostComments postId={post.id} />
       </div>
     </article>
   );
