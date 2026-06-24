@@ -10,19 +10,29 @@ import Testimonials from '@/components/Testimonials';
 export const dynamic = 'force-dynamic';
 
 async function getFeaturedProducts() {
-  return prisma.product.findMany({
-    where: { isActive: true },
-    take: 8,
-    orderBy: { createdAt: 'desc' },
-  });
+  try {
+    return prisma.product.findMany({
+      where: { isActive: true },
+      take: 8,
+      orderBy: { createdAt: 'desc' },
+    });
+  } catch (error) {
+    console.error('Failed to fetch products:', error);
+    return [];
+  }
 }
 
 async function getLatestPosts() {
-  return prisma.post.findMany({
-    where: { published: true },
-    take: 3,
-    orderBy: { createdAt: 'desc' },
-  });
+  try {
+    return prisma.post.findMany({
+      where: { published: true },
+      take: 3,
+      orderBy: { createdAt: 'desc' },
+    });
+  } catch (error) {
+    console.error('Failed to fetch posts:', error);
+    return [];
+  }
 }
 
 export default async function HomePage() {
