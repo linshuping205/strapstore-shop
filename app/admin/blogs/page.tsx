@@ -46,7 +46,17 @@ export default function BlogsPage() {
     fetch('/api/admin/posts')
       .then((r) => r.json())
       .then((data) => {
-        setPosts(data);
+        if (Array.isArray(data)) {
+          setPosts(data);
+        } else {
+          console.error('API returned non-array:', data);
+          setPosts([]);
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch posts:', err);
+        setPosts([]);
         setLoading(false);
       });
   }, []);
