@@ -10,8 +10,8 @@ export async function GET() {
       select: { tags: true, category: true },
     });
 
-    const tags = [...new Set(posts.flatMap((p) => p.tags))].sort();
-    const categories = [...new Set(posts.map((p) => p.category))].sort();
+    const tags = Array.from(new Set(posts.flatMap((p) => p.tags))).sort();
+    const categories = Array.from(new Set(posts.map((p) => p.category))).sort();
 
     return NextResponse.json({ success: true, tags, categories });
   } catch (error) {
