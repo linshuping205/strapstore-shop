@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { prisma } from '@/lib/prisma';
 import ProductCard from '@/components/ProductCard';
 import HeroBanner from '@/components/HeroBanner';
 import Craftsmanship from '@/components/Craftsmanship';
@@ -11,33 +10,46 @@ export const dynamic = 'force-dynamic';
 
 async function getFeaturedProducts() {
   try {
-    return prisma.product.findMany({
+    const { prisma } = await import('@/lib/prisma');
+    return await prisma.product.findMany({
       where: { isActive: true },
       take: 8,
       orderBy: { createdAt: 'desc' },
     });
-  } catch (error) {
-    console.error('Failed to fetch products:', error);
+  } catch (error: any) {
+    console.error('DB Error (products):', error.message);
     return [];
   }
 }
 
 async function getLatestPosts() {
   try {
-    return prisma.post.findMany({
+    const { prisma } = await import('@/lib/prisma');
+    return await prisma.post.findMany({
       where: { published: true },
       take: 3,
       orderBy: { createdAt: 'desc' },
     });
-  } catch (error) {
-    console.error('Failed to fetch posts:', error);
+  } catch (error: any) {
+    console.error('DB Error (posts):', error.message);
     return [];
   }
 }
 
 export default async function HomePage() {
-  const products = await getFeaturedProducts();
-  const posts = await getLatestPosts();
+  let products: any[] = [];
+  let posts: any[] = [];
+  let error: string | null = null;
+
+  try {
+    [products, posts] = await Promise.all([
+      getFeaturedProducts(),
+      getLatestPosts(),
+    ]);
+  } catch (err: any) {
+    error = err.message || 'Unknown error';
+    console.error('HomePage error:', err);
+  }
 
   const structuredData = {
     '@context': 'https://schema.org',
