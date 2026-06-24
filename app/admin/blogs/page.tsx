@@ -1,79 +1,122 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Plus, Pencil, Trash2, X, Eye } from 'lucide-react';
 
-interface Blog {
-  id: number;
+interface Post {
+  id: string;
   title: string;
   slug: string;
+  excerpt: string | null;
+  content: string;
+  coverImage: string | null;
   category: string;
-  status: 'Published' | 'Draft';
-  date: string;
+  tags: string[];
+  published: boolean;
+  metaTitle: string | null;
+  metaDesc: string | null;
+  createdAt: string;
 }
 
-const initialBlogs: Blog[] = [
-  { id: 1, title: 'Rubber vs Leather vs Metal Watch Strap', slug: 'rubber-vs-leather-vs-metal', category: 'Guide', status: 'Published', date: '2026-06-20' },
-  { id: 2, title: 'How to Care for Your Leather Strap', slug: 'leather-strap-care', category: 'Tips', status: 'Published', date: '2026-06-18' },
-  { id: 3, title: 'Top 5 NATO Straps for Summer 2026', slug: 'top-nato-straps-2026', category: 'Review', status: 'Draft', date: '2026-06-15' },
-];
-
 export default function BlogsPage() {
-  const [blogs, setBlogs] = useState<Blog[]>(initialBlogs);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [editing, setEditing] = useState<Blog | null>(null);
+  const [editing, setEditing] = useState<Post | null>(null);
 
   const [form, setForm] = useState({
     title: '',
     slug: '',
+    excerpt: '',
+    content: '',
+    coverImage: '',
     category: 'Guide',
-    status: 'Published' as 'Published' | 'Draft',
+    tags: '',
+    published: false,
+    metaTitle: '',
+    metaDesc: '',
   });
 
-  const filtered = blogs.filter((b) =>
-    b.title.toLowerCase().includes(search.toLowerCase())
+  // 加载数据
+  useEffect(() => {
+    fetch('/api/admin/posts')
+      .then((r) => r.json())
+      .then((data) => {
+        setPosts(data);
+        setLoading(false);
+      });
+  }, []);
+
+  const filtered = posts.filter((p) =>
+    p.title.toLowerCase().includes(search.toLowerCase())
   );
 
   const openAdd = () => {
     setEditing(null);
-    setForm({ title: '', slug: '', category: 'Guide', status: 'Published' });
-    setShowModal(true);
-  };
-
-  const openEdit = (blog: Blog) => {
-    setEditing(blog);
     setForm({
-      title: blog.title,
-      slug: blog.slug,
-      category: blog.category,
-      status: blog.status,
+      title: '', slug: '', excerpt: '', content: '',
+      coverImage: '', category: 'Guide', tags: '', published: false,
+      metaTitle: '', metaDesc: '',
     });
     setShowModal(true);
   };
 
-  const handleSave = () => {
-    if (!form.title || !form.slug) return;
-    if (editing) {
-      setBlogs((prev) =>
-        prev.map((b) => (b.id === editing.id ? { ...b, ...form } : b))
-      );
-    } else {
-      const newBlog: Blog = {
-        id: Date.now(),
-        ...form,
-        date: new Date().toISOString().split('T')[0],
-      };
-      setBlogs((prev) => [newBlog, ...prev]);
-    }
-    setShowModal(false);
+  const openEdit = (post: Post) => {
+    setEditing(post);
+    setForm({
+      title: post.title,
+      slug: post.slug,
+      excerpt: post.excerpt || '',
+      content: post.content || '',
+      coverImage: post.coverImage || '',
+      category: post.category,
+      tags: post.tags.join(', '),
+      published: post.published,
+      metaTitle: post.metaTitle || '',
+      metaDesc: post.metaDesc || '',
+    });
+    setShowModal(true);
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm('Delete this blog post?')) {
-      setBlogs((prev) => prev.filter((b) => b.id !== id));
+  const handleSave = async () => {
+    if (!form.title || !form.slug) return;
+
+    const payload = {
+      ...form,
+      tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
+    };
+
+    const url = editing ? `/api/admin/posts/${editing.id}` : '/api/admin/posts';
+    const method = editing ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.ok) {
+      const saved = await res.json();
+      if (editing) {
+        setPosts((prev) => prev.map((p) => (p.id === editing.id ? saved : p)));
+      } else {
+        setPosts((prev) => [saved, ...prev]);
+      }
+      setShowModal(false);
     }
   };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this post?')) return;
+    const res = await fetch(`/api/admin/posts/${id}`, { method: 'DELETE' });
+    if (res.ok) setPosts((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const autoSlug = (title: string) =>
+    title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').slice(0, 60);
+
+  if (loading) return <div className="p-8 text-gray-400">Loading...</div>;
 
   return (
     <div>
@@ -83,8 +126,7 @@ export default function BlogsPage() {
           onClick={openAdd}
           className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors"
         >
-          <Plus size={18} />
-          New Post
+          <Plus size={18} /> New Post
         </button>
       </div>
 
@@ -115,35 +157,39 @@ export default function BlogsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filtered.map((blog) => (
-                <tr key={blog.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-gray-900">{blog.title}</td>
-                  <td className="px-6 py-4 text-gray-500 text-xs">/{blog.slug}</td>
-                  <td className="px-6 py-4 text-gray-600">{blog.category}</td>
-                  <td className="px-6 py-4 text-gray-600">{blog.date}</td>
+              {filtered.map((post) => (
+                <tr key={post.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 font-medium text-gray-900">{post.title}</td>
+                  <td className="px-6 py-4 text-gray-500 text-xs font-mono">/{post.slug}</td>
+                  <td className="px-6 py-4 text-gray-600">{post.category}</td>
+                  <td className="px-6 py-4 text-gray-600">
+                    {new Date(post.createdAt).toLocaleDateString()}
+                  </td>
                   <td className="px-6 py-4">
                     <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                      blog.status === 'Published'
-                        ? 'bg-green-50 text-green-600'
-                        : 'bg-gray-100 text-gray-600'
+                      post.published ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-600'
                     }`}>
-                      {blog.status}
+                      {post.published ? 'Published' : 'Draft'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors">
+                      <a
+                        href={`/blog/${post.slug}`}
+                        target="_blank"
+                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md"
+                      >
                         <Eye size={16} />
-                      </button>
+                      </a>
                       <button
-                        onClick={() => openEdit(blog)}
-                        className="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-colors"
+                        onClick={() => openEdit(post)}
+                        className="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-md"
                       >
                         <Pencil size={16} />
                       </button>
                       <button
-                        onClick={() => handleDelete(blog.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                        onClick={() => handleDelete(post.id)}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -154,7 +200,7 @@ export default function BlogsPage() {
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
-                    No blog posts found
+                    No posts found
                   </td>
                 </tr>
               )}
@@ -166,7 +212,7 @@ export default function BlogsPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-xl w-full max-w-lg mx-4 shadow-xl">
+          <div className="bg-white rounded-xl w-full max-w-2xl mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900">
                 {editing ? 'Edit Post' : 'New Post'}
@@ -176,26 +222,68 @@ export default function BlogsPage() {
               </button>
             </div>
             <div className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                  <input
+                    type="text"
+                    value={form.title}
+                    onChange={(e) => {
+                      const t = e.target.value;
+                      setForm((p) => ({
+                        ...p,
+                        title: t,
+                        slug: editing ? p.slug : autoSlug(t),
+                      }));
+                    }}
+                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                  <input
+                    type="text"
+                    value={form.slug}
+                    onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                <input
-                  type="text"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                <label className="block text-sm font-medium text-gray-700 mb-1">Excerpt</label>
+                <textarea
+                  value={form.excerpt}
+                  onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
+                  rows={2}
+                  placeholder="Short description for SEO and list view..."
                   className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
-                <input
-                  type="text"
-                  value={form.slug}
-                  onChange={(e) => setForm({ ...form, slug: e.target.value })}
-                  placeholder="rubber-vs-leather-vs-metal"
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                <label className="block text-sm font-medium text-gray-700 mb-1">Content (HTML)</label>
+                <textarea
+                  value={form.content}
+                  onChange={(e) => setForm({ ...form, content: e.target.value })}
+                  rows={8}
+                  placeholder="<p>Write your article content here...</p>"
+                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
                 />
+                <p className="text-xs text-gray-400 mt-1">Supports HTML tags</p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cover Image URL</label>
+                  <input
+                    type="text"
+                    value={form.coverImage}
+                    onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                   <select
@@ -209,16 +297,52 @@ export default function BlogsPage() {
                     <option>News</option>
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                <input
+                  type="text"
+                  value={form.tags}
+                  onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                  placeholder="leather, watch, strap, summer"
+                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+                <p className="text-xs text-gray-400 mt-1">Comma separated</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="published"
+                    checked={form.published}
+                    onChange={(e) => setForm({ ...form, published: e.target.checked })}
+                    className="w-4 h-4 text-amber-600 rounded border-gray-300 focus:ring-amber-500"
+                  />
+                  <label htmlFor="published" className="text-sm font-medium text-gray-700">
+                    Published
+                  </label>
+                </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <select
-                    value={form.status}
-                    onChange={(e) => setForm({ ...form, status: e.target.value as 'Published' | 'Draft' })}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">SEO Title</label>
+                  <input
+                    type="text"
+                    value={form.metaTitle}
+                    onChange={(e) => setForm({ ...form, metaTitle: e.target.value })}
+                    placeholder="Optional"
                     className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  >
-                    <option>Published</option>
-                    <option>Draft</option>
-                  </select>
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">SEO Description</label>
+                  <input
+                    type="text"
+                    value={form.metaDesc}
+                    onChange={(e) => setForm({ ...form, metaDesc: e.target.value })}
+                    placeholder="Optional"
+                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
                 </div>
               </div>
             </div>
@@ -233,7 +357,7 @@ export default function BlogsPage() {
                 onClick={handleSave}
                 className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg"
               >
-                {editing ? 'Save Changes' : 'Publish'}
+                {editing ? 'Save Changes' : 'Create Post'}
               </button>
             </div>
           </div>
