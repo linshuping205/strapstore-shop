@@ -78,9 +78,7 @@ export async function GET() {
 
         await prisma.$executeRawUnsafe(
           `INSERT INTO "posts" ("id", "slug", "title", "content", "excerpt", "coverImage", "category", "tags", "published", "likes", "views", "createdAt", "updatedAt")
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())`,
-          post.id, post.slug, title, content, excerpt, post.coverImage,
-          post.category, JSON.stringify(post.tags), post.published, post.likes, post.views
+           VALUES ('${post.id}', '${post.slug}', '${title}', '${content}', '${excerpt}', '${post.coverImage}', '${post.category}', '${JSON.stringify(post.tags)}', ${post.published}, ${post.likes}, ${post.views}, NOW(), NOW())`
         );
         results.push(`Inserted post: ${post.title}`);
         insertedCount++;
@@ -132,10 +130,7 @@ export async function GET() {
 
         await prisma.$executeRawUnsafe(
           `INSERT INTO "products" ("id", "slug", "name", "description", "price", "category", "material", "tags", "stock", "sku", "isActive", "createdAt", "updatedAt")
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())`,
-          product.id, product.slug, name, description, product.price,
-          product.category, product.material, JSON.stringify(product.tags),
-          product.stock, product.sku, product.isActive
+           VALUES ('${product.id}', '${product.slug}', '${name}', '${description}', ${product.price}, '${product.category}', '${product.material}', '${JSON.stringify(product.tags)}', ${product.stock}, '${product.sku}', ${product.isActive}, NOW(), NOW())`
         );
         results.push(`Inserted product: ${product.name}`);
       } catch (e: any) {
