@@ -163,12 +163,12 @@ export default function BlogSearch() {
           {posts.map((post) => (
             <article key={post.id} className="group">
               {/* 调试信息 - 显示 coverImage 值 */}
-              <div className="text-[10px] text-red-400 mb-1 font-mono">coverImage: {post.coverImage || 'NULL/EMPTY'}</div>
+              <div className="text-[10px] text-red-400 mb-1 font-mono">coverImage: {post.coverImage || (post as any).coverimage || 'NULL/EMPTY'}</div>
               <Link href={`/blog/${post.slug}/`}>
                 <div className="aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden mb-4">
-                  {!!post.coverImage && post.coverImage.trim() !== '' ? (
+                  {!!(post.coverImage || (post as any).coverimage) && ((post.coverImage || (post as any).coverimage).trim() !== '') ? (
                     <img
-                      src={post.coverImage}
+                      src={post.coverImage || (post as any).coverimage || ''}
                       alt={post.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       onError={(e) => {
