@@ -5,6 +5,9 @@ import HeroBanner from '@/components/HeroBanner';
 import Craftsmanship from '@/components/Craftsmanship';
 import Testimonials from '@/components/Testimonials';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 async function getFeaturedProducts() {
   try {
     const { prisma } = await import('@/lib/prisma');
