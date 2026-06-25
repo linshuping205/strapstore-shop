@@ -6,10 +6,18 @@ import { prisma } from '@/lib/prisma';
 // GET /api/admin/posts — 获取所有博客文章（含草稿）
 export async function GET() {
   try {
-    const posts = await prisma.post.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    return NextResponse.json(posts);
+    // 使用原始 SQL 绕过 Prisma Client schema 问题
+    const posts = await prisma.$queryRawUnsafe<any[]>(`
+      SELECT 
+        "id", "slug", "title", "excerpt", "coverImage" as "coverImage", 
+        "category", "tags", "published", "likes", "views", "createdAt", "updatedAt"
+      FROM "posts"
+      ORDER BY "createdAt" DESC
+    `);
+    return NextResponse.json(posts.map(p => ({
+      ...p,
+      tags: typeof p.tags === 'string' ? JSON.parse(p.tags) : p.tags,
+    })));
   } catch (error) {
     console.error('Admin posts GET error:', error);
     return NextResponse.json({ error: 'Database error' }, { status: 500 });
