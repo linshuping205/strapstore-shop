@@ -64,8 +64,7 @@ export async function GET() {
     for (const post of blogPosts) {
       try {
         const existing = await prisma.$queryRawUnsafe<{ id: string }[]>(
-          `SELECT id FROM "posts" WHERE id = $1`,
-          post.id
+          `SELECT id FROM "posts" WHERE id = '${post.id}'`
         );
 
         if (existing && existing.length > 0) {
@@ -79,9 +78,7 @@ export async function GET() {
 
         await prisma.$executeRawUnsafe(
           `INSERT INTO "posts" ("id", "slug", "title", "content", "excerpt", "coverImage", "category", "tags", "published", "likes", "views", "createdAt", "updatedAt")
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())`,
-          post.id, post.slug, title, content, excerpt, post.coverImage,
-          post.category, JSON.stringify(post.tags), post.published, post.likes, post.views
+           VALUES ('${post.id}', '${post.slug}', '${title}', '${content}', '${excerpt}', '${post.coverImage}', '${post.category}', '${JSON.stringify(post.tags)}', ${post.published}, ${post.likes}, ${post.views}, NOW(), NOW())`
         );
 
         insertedCount++;
