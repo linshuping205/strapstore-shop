@@ -126,9 +126,21 @@ export default function BlogsPage() {
     alert(`Created ${created} sample posts!`);
     
     // Refresh list
-    const res = await fetch('/api/admin/posts');
-    const data = await res.json();
-    if (Array.isArray(data)) setPosts(data);
+    try {
+      const res = await fetch('/api/admin/posts');
+      const data = await res.json();
+      console.log('Refreshed data:', data);
+      if (Array.isArray(data)) {
+        setPosts(data);
+      } else if (data.error) {
+        console.error('API error:', data.error);
+        alert('Refresh error: ' + data.error);
+      } else {
+        console.error('Unexpected API response:', data);
+      }
+    } catch (err) {
+      console.error('Failed to refresh:', err);
+    }
     
     setLoading(false);
   };
