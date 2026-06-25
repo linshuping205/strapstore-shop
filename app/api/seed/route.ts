@@ -18,15 +18,14 @@ export async function GET() {
       results.push('Schema check error: ' + e.message);
     }
 
-    // 2. Clean old data
-    try { await prisma.$executeRawUnsafe(`DELETE FROM "comments"`); } catch { }
-    try { await prisma.$executeRawUnsafe(`DELETE FROM "posts"`); } catch { }
-    try { await prisma.$executeRawUnsafe(`DELETE FROM "products"`); } catch { }
-    try { await prisma.$executeRawUnsafe(`DELETE FROM "orders"`); } catch { }
-    try { await prisma.$executeRawUnsafe(`DELETE FROM "order_items"`); } catch { }
-    results.push('Old data cleaned');
+    // 2. Check if seed posts already exist
+    const existingPosts = await prisma.$queryRawUnsafe<any[]>(`
+      SELECT id FROM "posts" WHERE id IN ('post_1', 'post_2', 'post_3')
+    `);
+    const existingIds = new Set(existingPosts.map(p => p.id));
+    results.push(`Existing seed posts: ${existingIds.size}`);
 
-    // 3. Insert posts with coverImage using raw SQL
+    // 3. Only insert missing seed posts (DO NOT delete existing data)
     const posts = [
       {
         id: 'post_1',
@@ -69,9 +68,13 @@ export async function GET() {
       },
     ];
 
+    let insertedCount = 0;
     for (const post of posts) {
+      if (existingIds.has(post.id)) {
+        results.push(`Skipped existing post: ${post.title}`);
+        continue;
+      }
       try {
-        // Try with quoted column name (coverImage)
         await prisma.$executeRawUnsafe(`
           INSERT INTO "posts" (
             "id", "slug", "title", "content", "excerpt", "coverImage",
@@ -92,20 +95,85 @@ export async function GET() {
             NOW()
           )
         `);
-        results.push(`Inserted post: ${post.title} with coverImage`);
+        results.push(`Inserted post: ${post.title}`);
+        insertedCount++;
       } catch (e: any) {
         results.push(`Insert error for ${post.title}: ${e.message}`);
       }
     }
 
-    // 4. Verify data
+    // 4. Also seed products if missing (optional)
+    const existingProducts = await prisma.$queryRawUnsafe<any[]>(`
+      SELECT id FROM "products" WHERE id IN ('prod_1', 'prod_2')
+    `);
+    const existingProdIds = new Set(existingProducts.map(p => p.id));
+
+    const products = [
+      {
+        id: 'prod_1',
+        slug: 'italian-buttero-leather-strap',
+        name: 'Italian Buttero Vegetable-Tanned Leather Strap',
+        description: 'Handcrafted from premium Italian vegetable-tanned leather.',
+        price: 89.00,
+        category: 'Leather',
+        material: 'Leather',
+        tags: ['leather', 'italian', 'premium'],
+        stock: 50,
+        sku: 'IBL-001',
+        isActive: true,
+      },
+      {
+        id: 'prod_2',
+        slug: 'crocodile-embossed-calfskin-strap',
+        name: 'Crocodile Embossed Calfskin Strap',
+        description: 'Luxurious crocodile pattern embossed on premium calfskin.',
+        price: 99.00,
+        category: 'Exotic',
+        material: 'Calfskin',
+        tags: ['exotic', 'crocodile', 'luxury'],
+        stock: 30,
+        sku: 'CEC-002',
+        isActive: true,
+      },
+    ];
+
+    for (const product of products) {
+      if (existingProdIds.has(product.id)) continue;
+      try {
+        await prisma.$executeRawUnsafe(`
+          INSERT INTO "products" (
+            "id", "slug", "name", "description", "price", "category",
+            "material", "tags", "stock", "sku", "isActive", "createdAt", "updatedAt"
+          ) VALUES (
+            '${product.id}',
+            '${product.slug}',
+            '${product.name.replace(/'/g, "''")}',
+            '${product.description.replace(/'/g, "''")}',
+            ${product.price},
+            '${product.category}',
+            '${product.material}',
+            '${JSON.stringify(product.tags)}',
+            ${product.stock},
+            '${product.sku}',
+            ${product.isActive},
+            NOW(),
+            NOW()
+          )
+        `);
+        results.push(`Inserted product: ${product.name}`);
+      } catch (e: any) {
+        results.push(`Insert product error: ${e.message}`);
+      }
+    }
+
+    // 5. Verify posts
     try {
       const verifyPosts = await prisma.$queryRawUnsafe<any[]>(`
-        SELECT "id", "title", "coverImage" FROM "posts" ORDER BY "id"
+        SELECT "id", "title", "coverImage" FROM "posts" ORDER BY "id" LIMIT 10
       `);
-      results.push(`Verified ${verifyPosts.length} posts:`);
+      results.push(`Total posts in DB: ${verifyPosts.length}`);
       for (const p of verifyPosts) {
-        const cover = p.coverImage || p.coverimage || p['coverImage'] || 'NULL';
+        const cover = p.coverImage || p.coverimage || 'NULL';
         results.push(`  - ${p.title}: coverImage=${cover}`);
       }
     } catch (e: any) {
@@ -114,7 +182,8 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      message: 'Database initialized with raw SQL',
+      message: 'Safe seed completed (no existing data was deleted)',
+      inserted: insertedCount,
       details: results,
     });
   } catch (error: any) {
