@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['localhost', 'your-cdn.com'],
+    domains: ['localhost', 'your-cdn.com', 'images.unsplash.com', '*.vercel-storage.com'],
     formats: ['image/webp', 'image/avif'],
   },
   trailingSlash: true,
@@ -17,5 +17,4 @@ const nextConfig = {
   },
 };
 
-// Trigger redeploy: Vercel Blob env vars connected
 module.exports = nextConfig;
