@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, Heart, Eye, MessageCircle } from 'lucide-react';
+import { Heart, Eye, MessageCircle } from 'lucide-react';
 
 interface Post {
   id: string;
@@ -25,54 +25,26 @@ interface Pagination {
   totalPages: number;
 }
 
-export default function BlogSearch() {
+export default function BlogList() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
-  const [search, setSearch] = useState('');
-  const [selectedTag, setSelectedTag] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams();
-    params.set('page', String(currentPage));
-    if (search) params.set('search', search);
-    if (selectedTag) params.set('tag', selectedTag);
-    if (selectedCategory) params.set('category', selectedCategory);
-
-    const res = await fetch(`/api/posts?${params.toString()}`);
+    const res = await fetch(`/api/posts?page=${currentPage}`);
     const data = await res.json();
     if (data.success) {
       setPosts(data.data);
       setPagination(data.pagination);
     }
     setLoading(false);
-  }, [currentPage, search, selectedTag, selectedCategory]);
-
-  const fetchFilters = useCallback(async () => {
-    const res = await fetch('/api/posts/tags');
-    const data = await res.json();
-    if (data.success) {
-      setTags(data.tags);
-      setCategories(data.categories);
-    }
-  }, []);
+  }, [currentPage]);
 
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
-
-  useEffect(() => {
-    fetchFilters();
-  }, [fetchFilters]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, selectedTag, selectedCategory]);
 
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString('en-US', {
@@ -83,73 +55,6 @@ export default function BlogSearch() {
 
   return (
     <div>
-      {/* Search */}
-      <div className="max-w-2xl mx-auto mb-10">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <input
-            type="text"
-            placeholder="Search articles..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
-          />
-        </div>
-      </div>
-
-      {/* Categories */}
-      {categories.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-2 mb-6">
-          <button
-            onClick={() => setSelectedCategory('')}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-              selectedCategory === ''
-                ? 'bg-amber-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            All
-          </button>
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat === selectedCategory ? '' : cat)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                selectedCategory === cat
-                  ? 'bg-amber-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Tags */}
-      {tags.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-2 mb-12">
-          {tags.slice(0, 12).map((tag) => (
-            <button
-              key={tag}
-              onClick={() => setSelectedTag(tag === selectedTag ? '' : tag)}
-              className={`px-3 py-1 rounded-full text-xs transition-all ${
-                selectedTag === tag
-                  ? 'bg-gray-800 text-white'
-                  : 'bg-gray-50 text-gray-500 border border-gray-200 hover:bg-gray-100'
-              }`}
-            >
-              #{tag}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Results count */}
-      <p className="text-center text-sm text-gray-400 mb-8">
-        {pagination && `${pagination.total} articles found`}
-      </p>
-
       {/* Loading */}
       {loading && (
         <div className="flex justify-center py-20">
@@ -162,8 +67,6 @@ export default function BlogSearch() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {posts.map((post) => (
             <article key={post.id} className="group">
-              {/* 调试信息 - 显示 coverImage 值 */}
-              <div className="text-[10px] text-red-400 mb-1 font-mono">coverImage: {post.coverImage || (post as any).coverimage || 'NULL/EMPTY'}</div>
               <Link href={`/blog/${post.slug}/`}>
                 <div className="aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden mb-4">
                   {!!(post.coverImage || (post as any).coverimage) && ((post.coverImage || (post as any).coverimage).trim() !== '') ? (
@@ -209,8 +112,7 @@ export default function BlogSearch() {
       {/* Empty */}
       {!loading && posts.length === 0 && (
         <div className="text-center py-20">
-          <p className="text-gray-400 text-lg">No articles found.</p>
-          <p className="text-gray-400 text-sm mt-2">Try adjusting your search or filters.</p>
+          <p className="text-gray-400 text-lg">No articles yet.</p>
         </div>
       )}
 
