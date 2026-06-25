@@ -51,32 +51,6 @@ export default function BlogsPage() {
     loadPosts();
   }, []);
 
-  const loadPosts = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/admin/posts');
-      const data = await res.json();
-      console.log('GET /api/admin/posts response:', data);
-      if (Array.isArray(data)) {
-        setPosts(data);
-      } else {
-        console.error('API returned non-array:', data);
-        alert('Failed to load posts: ' + (data.error || JSON.stringify(data)));
-        setPosts([]);
-      }
-    } catch (err: any) {
-      console.error('Failed to fetch posts:', err);
-      alert('Network error loading posts: ' + err.message);
-      setPosts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadPosts();
-  }, []);
-
   const filtered = posts.filter((p) =>
     p.title.toLowerCase().includes(search.toLowerCase())
   );
