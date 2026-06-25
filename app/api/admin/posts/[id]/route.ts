@@ -1,9 +1,9 @@
-export const dynamic = 'force-dynamic';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// GET /api/admin/posts/:id — 获取单篇文章
+export const dynamic = 'force-dynamic';
+
+// GET /api/admin/posts/:id
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -22,7 +22,7 @@ export async function GET(
   }
 }
 
-// PUT /api/admin/posts/:id — 更新文章
+// PUT /api/admin/posts/:id
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -59,7 +59,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/admin/posts/:id — 删除文章
+// DELETE /api/admin/posts/:id
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
