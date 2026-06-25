@@ -3,43 +3,28 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Heart, Eye, MessageCircle } from 'lucide-react';
-
-interface Post {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string | null;
-  coverImage: string | null;
-  category: string;
-  tags: string[];
-  likes: number;
-  views: number;
-  createdAt: string;
-  _count: { comments: number };
-}
-
-interface Pagination {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
+import type { PostListItem, Pagination } from '@/types/blog';
 
 export default function BlogList() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<PostListItem[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/posts?page=${currentPage}`);
-    const data = await res.json();
-    if (data.success) {
-      setPosts(data.data);
-      setPagination(data.pagination);
+    try {
+      const res = await fetch(`/api/posts?page=${currentPage}`);
+      const data = await res.json();
+      if (data.success) {
+        setPosts(data.data);
+        setPagination(data.pagination);
+      }
+    } catch (e) {
+      console.error('Failed to fetch posts:', e);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [currentPage]);
 
   useEffect(() => {
@@ -69,9 +54,9 @@ export default function BlogList() {
             <article key={post.id} className="group">
               <Link href={`/blog/${post.slug}/`}>
                 <div className="aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden mb-4">
-                  {!!(post.coverImage || (post as any).coverimage) && ((post.coverImage || (post as any).coverimage).trim() !== '') ? (
+                  {post.coverImage ? (
                     <img
-                      src={post.coverImage || (post as any).coverimage || ''}
+                      src={post.coverImage}
                       alt={post.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       onError={(e) => {
@@ -101,7 +86,6 @@ export default function BlogList() {
                 <div className="flex items-center gap-4 text-xs text-gray-400">
                   <span className="flex items-center gap-1"><Heart size={14} /> {post.likes}</span>
                   <span className="flex items-center gap-1"><Eye size={14} /> {post.views}</span>
-                  <span className="flex items-center gap-1"><MessageCircle size={14} /> {post._count.comments}</span>
                 </div>
               </Link>
             </article>
