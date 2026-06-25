@@ -22,17 +22,12 @@ async function getFeaturedProducts() {
 async function getLatestPosts() {
   try {
     const { prisma } = await import('@/lib/prisma');
-    const posts = await prisma.$queryRawUnsafe<any[]>(
-      `SELECT "id", "slug", "title", "excerpt", "coverImage" as "coverImage", "category", "tags", "likes", "views", "createdAt"
-      FROM "posts"
-      WHERE "published" = true
-      ORDER BY "createdAt" DESC
-      LIMIT 3`
-    );
-    return posts.map((p) => ({
-      ...p,
-      tags: typeof p.tags === 'string' ? JSON.parse(p.tags) : p.tags,
-    }));
+    const posts = await prisma.post.findMany({
+      where: { published: true },
+      orderBy: { createdAt: 'desc' },
+      take: 3,
+    });
+    return posts;
   } catch (error: any) {
     console.error('DB Error (posts):', error.message);
     return [];
@@ -166,41 +161,12 @@ export default async function HomePage() {
                 </article>
               ))
             ) : (
-              <>
-                <article className="group">
-                  <Link href="/blog/">
-                    <div className="aspect-[16/10] rounded-lg overflow-hidden mb-6 relative bg-gray-100">
-                      <Image src="https://images.unsplash.com/photo-1509941943102-10c232535736?w=800&h=500&fit=crop" alt="Vegetable-Tanned Leather" width={800} height={500} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" />
-                    </div>
-                    <div className="flex gap-4 text-xs text-gray-400 mb-3.5 uppercase tracking-wider"><span>Jun 10, 2026</span><span>5 min read</span></div>
-                    <h3 className="font-heading text-xl font-medium leading-snug mb-3.5 group-hover:text-accent transition-colors">Why Is Italian Vegetable-Tanned Leather Worth a 3-Year Wait?</h3>
-                    <p className="text-sm text-gray-500 leading-7 mb-5 line-clamp-2">From the oak forests of Tuscany to the finished strap, discover the full lifecycle of vegetable-tanned leather and how time grants it a unique patina.</p>
-                    <span className="text-xs font-semibold uppercase tracking-[1.5px] text-accent hover:text-yellow-700 transition-colors inline-flex items-center gap-1.5 group-hover:gap-2.5">Read More →</span>
-                  </Link>
-                </article>
-                <article className="group">
-                  <Link href="/blog/">
-                    <div className="aspect-[16/10] rounded-lg overflow-hidden mb-6 relative bg-gray-100">
-                      <Image src="https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=800&h=500&fit=crop" alt="Strap Material Guide" width={800} height={500} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" />
-                    </div>
-                    <div className="flex gap-4 text-xs text-gray-400 mb-3.5 uppercase tracking-wider"><span>Jun 05, 2026</span><span>8 min read</span></div>
-                    <h3 className="font-heading text-xl font-medium leading-snug mb-3.5 group-hover:text-accent transition-colors">Rubber vs Leather vs Metal: The Ultimate Strap Material Guide</h3>
-                    <p className="text-sm text-gray-500 leading-7 mb-5 line-clamp-2">Matching rules for different occasions, seasons, and watch styles. From dive-watch rubber to dress-watch crocodile, find your perfect pairing.</p>
-                    <span className="text-xs font-semibold uppercase tracking-[1.5px] text-accent hover:text-yellow-700 transition-colors inline-flex items-center gap-1.5 group-hover:gap-2.5">Read More →</span>
-                  </Link>
-                </article>
-                <article className="group">
-                  <Link href="/blog/">
-                    <div className="aspect-[16/10] rounded-lg overflow-hidden mb-6 relative bg-gray-100">
-                      <Image src="https://images.unsplash.com/photo-1434056886845-dbe89f8f1db8?w=800&h=500&fit=crop" alt="Saddle Stitch" width={800} height={500} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" />
-                    </div>
-                    <div className="flex gap-4 text-xs text-gray-400 mb-3.5 uppercase tracking-wider"><span>May 28, 2026</span><span>6 min read</span></div>
-                    <h3 className="font-heading text-xl font-medium leading-snug mb-3.5 group-hover:text-accent transition-colors">Saddle Stitch: Every Stitch Is a Mark of Time</h3>
-                    <p className="text-sm text-gray-500 leading-7 mb-5 line-clamp-2">A visit to our handcraft workshop. Learn why traditional saddle stitch outlasts machine sewing and what defines a good stitch in an artisan&apos;s eyes.</p>
-                    <span className="text-xs font-semibold uppercase tracking-[1.5px] text-accent hover:text-yellow-700 transition-colors inline-flex items-center gap-1.5 group-hover:gap-2.5">Read More →</span>
-                  </Link>
-                </article>
-              </>
+              <div className="col-span-3 text-center py-12">
+                <p className="text-gray-400 text-lg mb-4">No articles in the database yet.</p>
+                <a href="/admin/blogs/" className="text-accent hover:text-yellow-700 underline text-sm">
+                  Go to Admin → Blog Posts to create content
+                </a>
+              </div>
             )}
           </div>
         </div>
