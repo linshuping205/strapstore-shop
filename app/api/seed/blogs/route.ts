@@ -63,9 +63,9 @@ export async function GET() {
   try {
     for (const post of blogPosts) {
       try {
-        // Check if post exists
         const existing = await prisma.$queryRawUnsafe<{ id: string }[]>(
-          `SELECT id FROM "posts" WHERE id = '${post.id}'`
+          `SELECT id FROM "posts" WHERE id = $1`,
+          post.id
         );
 
         if (existing && existing.length > 0) {
@@ -73,9 +73,15 @@ export async function GET() {
           continue;
         }
 
-        // Insert new post
+        const title = post.title.replace(/'/g, "''");
+        const content = post.content.replace(/'/g, "''");
+        const excerpt = post.excerpt.replace(/'/g, "''");
+
         await prisma.$executeRawUnsafe(
-          `INSERT INTO "posts" ("id", "slug", "title", "content", "excerpt", "coverImage", "category", "tags", "published", "likes", "views", "createdAt", "updatedAt") VALUES ('${post.id}', '${post.slug}', '${post.title.replace(/'/g, "''")}', '${post.content.replace(/'/g, "''")}', '${post.excerpt.replace(/'/g, "''")}', '${post.coverImage}', '${post.category}', '${JSON.stringify(post.tags)}', ${post.published}, ${post.likes}, ${post.views}, NOW(), NOW())`
+          `INSERT INTO "posts" ("id", "slug", "title", "content", "excerpt", "coverImage", "category", "tags", "published", "likes", "views", "createdAt", "updatedAt")
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())`,
+          post.id, post.slug, title, content, excerpt, post.coverImage,
+          post.category, JSON.stringify(post.tags), post.published, post.likes, post.views
         );
 
         insertedCount++;
