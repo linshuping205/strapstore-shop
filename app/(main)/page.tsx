@@ -5,9 +5,6 @@ import HeroBanner from '@/components/HeroBanner';
 import Craftsmanship from '@/components/Craftsmanship';
 import Testimonials from '@/components/Testimonials';
 
-// 动态渲染：不预渲染，避免构建时数据库 schema 不匹配
-export const dynamic = 'force-dynamic';
-
 async function getFeaturedProducts() {
   try {
     const { prisma } = await import('@/lib/prisma');
@@ -25,15 +22,14 @@ async function getFeaturedProducts() {
 async function getLatestPosts() {
   try {
     const { prisma } = await import('@/lib/prisma');
-    // 使用原始 SQL 绕过 Prisma Client schema 问题
-    const posts = await prisma.$queryRawUnsafe<any[]>(`
-      SELECT "id", "slug", "title", "excerpt", "coverImage" as "coverImage", "category", "tags", "likes", "views", "createdAt"
+    const posts = await prisma.$queryRawUnsafe<any[]>(
+      `SELECT "id", "slug", "title", "excerpt", "coverImage" as "coverImage", "category", "tags", "likes", "views", "createdAt"
       FROM "posts"
       WHERE "published" = true
       ORDER BY "createdAt" DESC
-      LIMIT 3
-    `);
-    return posts.map(p => ({
+      LIMIT 3`
+    );
+    return posts.map((p) => ({
       ...p,
       tags: typeof p.tags === 'string' ? JSON.parse(p.tags) : p.tags,
     }));
@@ -46,7 +42,6 @@ async function getLatestPosts() {
 export default async function HomePage() {
   let products: any[] = [];
   let posts: any[] = [];
-  let error: string | null = null;
 
   try {
     [products, posts] = await Promise.all([
@@ -54,7 +49,6 @@ export default async function HomePage() {
       getLatestPosts(),
     ]);
   } catch (err: any) {
-    error = err.message || 'Unknown error';
     console.error('HomePage error:', err);
   }
 
