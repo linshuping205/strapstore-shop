@@ -3,24 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Plus, Pencil, Trash2, X, Eye } from 'lucide-react';
 import RichTextEditor from '@/components/blog/RichTextEditor';
-
-interface Post {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt: string | null;
-  content: string;
-  coverImage: string | null;
-  category: string;
-  tags: string[];
-  published: boolean;
-  likes: number;
-  views: number;
-  metaTitle: string | null;
-  metaDesc: string | null;
-  createdAt: string;
-  _count?: { comments: number };
-}
+import type { Post } from '@/types/blog';
 
 export default function BlogsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -42,7 +25,6 @@ export default function BlogsPage() {
     metaDesc: '',
   });
 
-  // 加载数据
   useEffect(() => {
     fetch('/api/admin/posts')
       .then((r) => r.json())
@@ -141,7 +123,7 @@ export default function BlogsPage() {
     } else {
       alert(`Created ${created} sample posts successfully!`);
     }
-    
+
     // Refresh list
     try {
       const res = await fetch('/api/admin/posts');
@@ -154,7 +136,7 @@ export default function BlogsPage() {
     } catch (err) {
       console.error('Failed to refresh:', err);
     }
-    
+
     setLoading(false);
   };
 
