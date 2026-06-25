@@ -25,11 +25,18 @@ async function getFeaturedProducts() {
 async function getLatestPosts() {
   try {
     const { prisma } = await import('@/lib/prisma');
-    return await prisma.post.findMany({
-      where: { published: true },
-      take: 3,
-      orderBy: { createdAt: 'desc' },
-    });
+    // 使用原始 SQL 绕过 Prisma Client schema 问题
+    const posts = await prisma.$queryRawUnsafe<any[]>(`
+      SELECT "id", "slug", "title", "excerpt", "coverImage" as "coverImage", "category", "tags", "likes", "views", "createdAt"
+      FROM "posts"
+      WHERE "published" = true
+      ORDER BY "createdAt" DESC
+      LIMIT 3
+    `);
+    return posts.map(p => ({
+      ...p,
+      tags: typeof p.tags === 'string' ? JSON.parse(p.tags) : p.tags,
+    }));
   } catch (error: any) {
     console.error('DB Error (posts):', error.message);
     return [];
