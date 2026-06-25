@@ -164,11 +164,14 @@ export default function BlogSearch() {
             <article key={post.id} className="group">
               <Link href={`/blog/${post.slug}/`}>
                 <div className="aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden mb-4">
-                  {post.coverImage ? (
+                  {!!post.coverImage && post.coverImage.trim() !== '' ? (
                     <img
                       src={post.coverImage}
                       alt={post.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-300">
