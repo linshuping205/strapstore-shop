@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Plus, Pencil, Trash2, X, Eye } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, X, Eye, RefreshCw } from 'lucide-react';
 import RichTextEditor from '@/components/blog/RichTextEditor';
 import type { Post } from '@/types/blog';
 
@@ -25,23 +25,56 @@ export default function BlogsPage() {
     metaDesc: '',
   });
 
-  useEffect(() => {
-    fetch('/api/admin/posts')
-      .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setPosts(data);
-        } else {
-          console.error('API returned non-array:', data);
-          setPosts([]);
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error('Failed to fetch posts:', err);
+  const loadPosts = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/posts');
+      const data = await res.json();
+      console.log('GET /api/admin/posts response:', data);
+      if (Array.isArray(data)) {
+        setPosts(data);
+      } else {
+        console.error('API returned non-array:', data);
+        alert('Failed to load posts: ' + (data.error || JSON.stringify(data)));
         setPosts([]);
-        setLoading(false);
-      });
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch posts:', err);
+      alert('Network error loading posts: ' + err.message);
+      setPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPosts();
+  }, []);
+
+  const loadPosts = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/posts');
+      const data = await res.json();
+      console.log('GET /api/admin/posts response:', data);
+      if (Array.isArray(data)) {
+        setPosts(data);
+      } else {
+        console.error('API returned non-array:', data);
+        alert('Failed to load posts: ' + (data.error || JSON.stringify(data)));
+        setPosts([]);
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch posts:', err);
+      alert('Network error loading posts: ' + err.message);
+      setPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPosts();
   }, []);
 
   const filtered = posts.filter((p) =>
@@ -124,19 +157,7 @@ export default function BlogsPage() {
       alert(`Created ${created} sample posts successfully!`);
     }
 
-    // Refresh list
-    try {
-      const res = await fetch('/api/admin/posts');
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setPosts(data);
-      } else {
-        console.error('API returned non-array:', data);
-      }
-    } catch (err) {
-      console.error('Failed to refresh:', err);
-    }
-
+    await loadPosts();
     setLoading(false);
   };
 
@@ -211,6 +232,13 @@ export default function BlogsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Blog Posts</h1>
         <div className="flex items-center gap-3">
+          <button
+            onClick={loadPosts}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
+          </button>
           <button
             onClick={generateSamplePosts}
             className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
