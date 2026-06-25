@@ -17,4 +17,5 @@ const nextConfig = {
   },
 };
 
+// Trigger redeploy: Vercel Blob env vars connected
 module.exports = nextConfig;
