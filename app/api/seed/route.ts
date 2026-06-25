@@ -69,7 +69,7 @@ const seedData = {
       title: 'Saddle Stitch: Every Stitch Is a Mark of Time',
       content: '<p>A visit to our handcraft workshop. Learn why traditional saddle stitch outlasts machine sewing.</p>',
       excerpt: 'A visit to our handcraft workshop.',
-      coverImage: 'https://images.unsplash.com/photo-1434056886845-dbe89f8f1db8?w=800&h=500&fit=crop',
+      coverImage: 'https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?w=800&h=500&fit=crop',
       category: 'Review',
       tags: ['craftsmanship', 'saddle-stitch', 'workshop'],
       published: true,
@@ -83,11 +83,14 @@ export async function GET() {
   const results: string[] = [];
 
   try {
-    // Step 1: 直接使用 SQL 确保 posts 表有 likes 和 views 列
+    // Step 1: Ensure coverImage column exists
     try {
       await prisma.$executeRawUnsafe(`
-        DO $$
-        BEGIN
+        DO $$ BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+            WHERE table_name='posts' AND column_name='coverImage') THEN
+            ALTER TABLE posts ADD COLUMN "coverImage" TEXT;
+          END IF;
           IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
             WHERE table_name='posts' AND column_name='likes') THEN
             ALTER TABLE posts ADD COLUMN likes INT DEFAULT 0;
@@ -98,19 +101,19 @@ export async function GET() {
           END IF;
         END $$;
       `);
-      results.push('Schema fixed: added likes/views columns if missing');
+      results.push('Schema fixed: columns added if missing');
     } catch (e: any) {
       results.push('Schema fix warning: ' + e.message);
     }
 
-    // Step 2: 清理旧数据
-    try { await prisma.comment.deleteMany(); } catch { /* ignore */ }
-    try { await prisma.orderItem.deleteMany(); } catch { /* ignore */ }
-    try { await prisma.order.deleteMany(); } catch { /* ignore */ }
-    try { await prisma.product.deleteMany(); } catch { /* ignore */ }
-    try { await prisma.post.deleteMany(); } catch { /* ignore */ }
+    // Step 2: Clean old data
+    try { await prisma.comment.deleteMany(); } catch { }
+    try { await prisma.orderItem.deleteMany(); } catch { }
+    try { await prisma.order.deleteMany(); } catch { }
+    try { await prisma.product.deleteMany(); } catch { }
+    try { await prisma.post.deleteMany(); } catch { }
 
-    // Step 3: 插入商品
+    // Step 3: Insert products
     try {
       await prisma.product.createMany({ data: seedData.products });
       results.push(`Created ${seedData.products.length} products`);
@@ -118,12 +121,43 @@ export async function GET() {
       results.push(`Products error: ${e.message}`);
     }
 
-    // Step 4: 插入文章
+    // Step 4: Insert posts (without coverImage first, then update via SQL)
     try {
-      await prisma.post.createMany({ data: seedData.posts });
-      results.push(`Created ${seedData.posts.length} posts`);
+      const postsWithoutCover = seedData.posts.map(p => {
+        const { coverImage, ...rest } = p;
+        return rest;
+      });
+      await prisma.post.createMany({ data: postsWithoutCover });
+      results.push(`Created ${postsWithoutCover.length} posts (base)`);
     } catch (e: any) {
-      results.push(`Posts error: ${e.message}`);
+      results.push(`Posts base error: ${e.message}`);
+    }
+
+    // Step 5: Update coverImage via SQL to bypass Prisma Client limitation
+    try {
+      for (const post of seedData.posts) {
+        if (post.coverImage) {
+          await prisma.$executeRawUnsafe(
+            `UPDATE posts SET "coverImage" = '${post.coverImage.replace(/'/g, "''")}' WHERE id = '${post.id}'`
+          );
+        }
+      }
+      results.push('Updated coverImage for all posts via SQL');
+    } catch (e: any) {
+      results.push(`CoverImage update error: ${e.message}`);
+    }
+
+    // Step 6: Verify data
+    try {
+      const posts = await prisma.$queryRawUnsafe<any[]>(
+        `SELECT id, title, "coverImage" FROM posts ORDER BY id`
+      );
+      results.push(`Verified: ${posts.length} posts in DB`);
+      for (const p of posts) {
+        results.push(`  - ${p.title}: coverImage=${p.coverImage ? 'SET' : 'NULL'}`);
+      }
+    } catch (e: any) {
+      results.push(`Verify error: ${e.message}`);
     }
 
     return NextResponse.json({
