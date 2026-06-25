@@ -52,13 +52,12 @@ export async function POST(request: NextRequest) {
     await prisma.$executeRawUnsafe(
       `INSERT INTO "posts" ("id", "slug", "title", "content", "excerpt", "coverImage",
         "category", "tags", "published", "likes", "views", "metaTitle", "metaDesc", "createdAt", "updatedAt")
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 0, 0, $10, $11, NOW(), NOW())`,
-      id, body.slug, title, content, excerpt, coverImage, category, tags, published, metaTitle, metaDesc
+      VALUES ('${id}', '${body.slug}', '${title}', '${content}', '${excerpt}', '${coverImage}',
+        '${category}', '${tags}', ${published}, 0, 0, '${metaTitle}', '${metaDesc}', NOW(), NOW())`
     );
 
     const post = await prisma.$queryRawUnsafe<any[]>(
-      `SELECT * FROM "posts" WHERE "id" = $1 LIMIT 1`,
-      id
+      `SELECT * FROM "posts" WHERE "id" = '${id}' LIMIT 1`
     );
 
     return NextResponse.json(
