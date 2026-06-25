@@ -22,11 +22,12 @@ export const useCartStore = create<CartStore>((set, get) => ({
   
   addToCart: (product) => set((state) => {
     const existing = state.items.find(item => item.id === product.id)
+    const addQty = product.quantity || 1
     if (existing) {
       return {
         items: state.items.map(item =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: item.quantity + addQty }
             : item
         )
       }
@@ -36,7 +37,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
         id: product.id,
         name: product.name,
         price: parseFloat(product.price),
-        quantity: 1,
+        quantity: addQty,
         image: product.images?.[0]
       }]
     }
