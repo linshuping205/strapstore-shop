@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -10,52 +12,33 @@ export async function GET(request: NextRequest) {
     const tag = searchParams.get('tag') || '';
     const category = searchParams.get('category') || '';
 
-    const where: any = { published: true };
-
-    if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { content: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-
-    if (tag) {
-      where.tags = { has: tag };
-    }
-
-    if (category) {
-      where.category = category;
-    }
-
     const skip = (page - 1) * limit;
 
-    // Use raw SQL to ensure coverImage is returned (bypass Prisma Client schema issues)
-    let postsQuery = `
-      SELECT 
-        id, slug, title, excerpt, "coverImage" as "coverImage", category, tags, 
-        likes, views, "createdAt"
-      FROM posts 
-      WHERE published = true
-    `;
-
+    // Build query conditions safely with parameter escaping
+    const conditions: string[] = ['published = true'];
     if (search) {
-      postsQuery += ` AND (title ILIKE '%${search}%' OR content ILIKE '%${search}%')`;
+      const safeSearch = search.replace(/'/g, "''");
+      conditions.push(`(title ILIKE '%${safeSearch}%' OR content ILIKE '%${safeSearch}%')`);
     }
     if (category) {
-      postsQuery += ` AND category = '${category}'`;
+      conditions.push(`category = '${category.replace(/'/g, "''")}'`);
     }
     if (tag) {
-      postsQuery += ` AND tags::text LIKE '%"${tag}"%'`;
+      conditions.push(`tags::text LIKE '%"${tag.replace(/'/g, "''")}"%'`);
     }
 
-    postsQuery += ` ORDER BY "createdAt" DESC LIMIT ${limit} OFFSET ${skip}`;
+    const whereClause = conditions.join(' AND ');
 
-    const countQuery = `
-      SELECT COUNT(*) as total FROM posts WHERE published = true
-      ${search ? ` AND (title ILIKE '%${search}%' OR content ILIKE '%${search}%')` : ''}
-      ${category ? ` AND category = '${category}'` : ''}
-      ${tag ? ` AND tags::text LIKE '%"${tag}"%'` : ''}
+    const postsQuery = `
+      SELECT id, slug, title, excerpt, "coverImage" as "coverImage", category, tags,
+        likes, views, "createdAt"
+      FROM posts
+      WHERE ${whereClause}
+      ORDER BY "createdAt" DESC
+      LIMIT ${limit} OFFSET ${skip}
     `;
+
+    const countQuery = `SELECT COUNT(*) as total FROM posts WHERE ${whereClause}`;
 
     const posts = await prisma.$queryRawUnsafe<any[]>(postsQuery);
     const countResult = await prisma.$queryRawUnsafe<any[]>(countQuery);
@@ -63,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: posts.map(p => ({
+      data: posts.map((p) => ({
         ...p,
         tags: typeof p.tags === 'string' ? JSON.parse(p.tags) : p.tags,
       })),
