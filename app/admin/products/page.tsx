@@ -229,7 +229,7 @@ export default function ProductsPage() {
     return isNaN(num) ? '0.00' : num.toFixed(2);
   };
 
-  if (loading) return <div className="p-8 text-gray-400">Loading...</div>;
+  if (loading) return null;
 
   return (
     <div>
