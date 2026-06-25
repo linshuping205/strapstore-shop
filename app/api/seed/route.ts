@@ -1,160 +1,112 @@
-export const dynamic = 'force-dynamic';
-
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-const seedData = {
-  products: [
-    {
-      id: 'prod_1',
-      slug: 'italian-buttero-leather-strap',
-      name: 'Italian Buttero Vegetable-Tanned Leather Strap',
-      description: 'Handcrafted from premium Italian vegetable-tanned leather.',
-      price: 89.00,
-      comparePrice: null,
-      images: ['https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?w=600&h=600&fit=crop'],
-      category: 'Leather',
-      material: 'Leather',
-      tags: ['leather', 'italian', 'premium'],
-      stock: 50,
-      sku: 'IBL-001',
-      isActive: true,
-    },
-    {
-      id: 'prod_2',
-      slug: 'crocodile-embossed-calfskin-strap',
-      name: 'Crocodile Embossed Calfskin Strap',
-      description: 'Luxurious crocodile pattern embossed on premium calfskin.',
-      price: 99.00,
-      comparePrice: 129.00,
-      images: ['https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=600&h=600&fit=crop'],
-      category: 'Exotic',
-      material: 'Calfskin',
-      tags: ['exotic', 'crocodile', 'luxury'],
-      stock: 30,
-      sku: 'CEC-002',
-      isActive: true,
-    },
-  ],
-  posts: [
-    {
-      id: 'post_1',
-      slug: 'why-italian-vegetable-tanned-leather',
-      title: 'Why Is Italian Vegetable-Tanned Leather Worth a 3-Year Wait?',
-      content: '<p>From the oak forests of Tuscany to the finished strap, discover the full lifecycle of vegetable-tanned leather.</p>',
-      excerpt: 'From the oak forests of Tuscany to the finished strap.',
-      coverImage: 'https://images.unsplash.com/photo-1509941943102-10c232535736?w=800&h=500&fit=crop',
-      category: 'Guide',
-      tags: ['leather', 'craftsmanship', 'italian'],
-      published: true,
-      likes: 12,
-      views: 345,
-    },
-    {
-      id: 'post_2',
-      slug: 'rubber-vs-leather-vs-metal-guide',
-      title: 'Rubber vs Leather vs Metal: The Ultimate Strap Material Guide',
-      content: '<p>Matching rules for different occasions, seasons, and watch styles.</p>',
-      excerpt: 'Matching rules for different occasions.',
-      coverImage: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=800&h=500&fit=crop',
-      category: 'Tips',
-      tags: ['material', 'rubber', 'leather', 'metal'],
-      published: true,
-      likes: 8,
-      views: 210,
-    },
-    {
-      id: 'post_3',
-      slug: 'saddle-stitch-workshop-visit',
-      title: 'Saddle Stitch: Every Stitch Is a Mark of Time',
-      content: '<p>A visit to our handcraft workshop. Learn why traditional saddle stitch outlasts machine sewing.</p>',
-      excerpt: 'A visit to our handcraft workshop.',
-      coverImage: 'https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?w=800&h=500&fit=crop',
-      category: 'Review',
-      tags: ['craftsmanship', 'saddle-stitch', 'workshop'],
-      published: true,
-      likes: 5,
-      views: 156,
-    },
-  ],
-};
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const results: string[] = [];
 
   try {
-    // Step 1: Ensure coverImage column exists
+    // 1. Check current schema and columns
     try {
-      await prisma.$executeRawUnsafe(`
-        DO $$ BEGIN
-          IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-            WHERE table_name='posts' AND column_name='coverImage') THEN
-            ALTER TABLE posts ADD COLUMN "coverImage" TEXT;
-          END IF;
-          IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-            WHERE table_name='posts' AND column_name='likes') THEN
-            ALTER TABLE posts ADD COLUMN likes INT DEFAULT 0;
-          END IF;
-          IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-            WHERE table_name='posts' AND column_name='views') THEN
-            ALTER TABLE posts ADD COLUMN views INT DEFAULT 0;
-          END IF;
-        END $$;
+      const columns = await prisma.$queryRawUnsafe<any[]>(`
+        SELECT column_name FROM information_schema.columns 
+        WHERE table_name = 'posts' ORDER BY ordinal_position
       `);
-      results.push('Schema fixed: columns added if missing');
+      results.push('Post columns: ' + columns.map(c => c.column_name).join(', '));
     } catch (e: any) {
-      results.push('Schema fix warning: ' + e.message);
+      results.push('Schema check error: ' + e.message);
     }
 
-    // Step 2: Clean old data
-    try { await prisma.comment.deleteMany(); } catch { }
-    try { await prisma.orderItem.deleteMany(); } catch { }
-    try { await prisma.order.deleteMany(); } catch { }
-    try { await prisma.product.deleteMany(); } catch { }
-    try { await prisma.post.deleteMany(); } catch { }
+    // 2. Clean old data
+    try { await prisma.$executeRawUnsafe(`DELETE FROM "comments"`); } catch { }
+    try { await prisma.$executeRawUnsafe(`DELETE FROM "posts"`); } catch { }
+    try { await prisma.$executeRawUnsafe(`DELETE FROM "products"`); } catch { }
+    try { await prisma.$executeRawUnsafe(`DELETE FROM "orders"`); } catch { }
+    try { await prisma.$executeRawUnsafe(`DELETE FROM "order_items"`); } catch { }
+    results.push('Old data cleaned');
 
-    // Step 3: Insert products
-    try {
-      await prisma.product.createMany({ data: seedData.products });
-      results.push(`Created ${seedData.products.length} products`);
-    } catch (e: any) {
-      results.push(`Products error: ${e.message}`);
-    }
+    // 3. Insert posts with coverImage using raw SQL
+    const posts = [
+      {
+        id: 'post_1',
+        slug: 'why-italian-vegetable-tanned-leather',
+        title: 'Why Is Italian Vegetable-Tanned Leather Worth a 3-Year Wait?',
+        content: '<p>From the oak forests of Tuscany to the finished strap, discover the full lifecycle of vegetable-tanned leather.</p>',
+        excerpt: 'From the oak forests of Tuscany to the finished strap.',
+        coverImage: 'https://images.unsplash.com/photo-1509941943102-10c232535736?w=800&h=500&fit=crop',
+        category: 'Guide',
+        tags: ['leather', 'craftsmanship', 'italian'],
+        published: true,
+        likes: 12,
+        views: 345,
+      },
+      {
+        id: 'post_2',
+        slug: 'rubber-vs-leather-vs-metal-guide',
+        title: 'Rubber vs Leather vs Metal: The Ultimate Strap Material Guide',
+        content: '<p>Matching rules for different occasions, seasons, and watch styles.</p>',
+        excerpt: 'Matching rules for different occasions.',
+        coverImage: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=800&h=500&fit=crop',
+        category: 'Tips',
+        tags: ['material', 'rubber', 'leather', 'metal'],
+        published: true,
+        likes: 8,
+        views: 210,
+      },
+      {
+        id: 'post_3',
+        slug: 'saddle-stitch-workshop-visit',
+        title: 'Saddle Stitch: Every Stitch Is a Mark of Time',
+        content: '<p>A visit to our handcraft workshop. Learn why traditional saddle stitch outlasts machine sewing.</p>',
+        excerpt: 'A visit to our handcraft workshop.',
+        coverImage: 'https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?w=800&h=500&fit=crop',
+        category: 'Review',
+        tags: ['craftsmanship', 'saddle-stitch', 'workshop'],
+        published: true,
+        likes: 5,
+        views: 156,
+      },
+    ];
 
-    // Step 4: Insert posts (without coverImage first, then update via SQL)
-    try {
-      const postsWithoutCover = seedData.posts.map(p => {
-        const { coverImage, ...rest } = p;
-        return rest;
-      });
-      await prisma.post.createMany({ data: postsWithoutCover });
-      results.push(`Created ${postsWithoutCover.length} posts (base)`);
-    } catch (e: any) {
-      results.push(`Posts base error: ${e.message}`);
-    }
-
-    // Step 5: Update coverImage via SQL to bypass Prisma Client limitation
-    try {
-      for (const post of seedData.posts) {
-        if (post.coverImage) {
-          await prisma.$executeRawUnsafe(
-            `UPDATE posts SET "coverImage" = '${post.coverImage.replace(/'/g, "''")}' WHERE id = '${post.id}'`
-          );
-        }
+    for (const post of posts) {
+      try {
+        // Try with quoted column name (coverImage)
+        await prisma.$executeRawUnsafe(`
+          INSERT INTO "posts" (
+            "id", "slug", "title", "content", "excerpt", "coverImage",
+            "category", "tags", "published", "likes", "views", "createdAt", "updatedAt"
+          ) VALUES (
+            '${post.id}',
+            '${post.slug}',
+            '${post.title.replace(/'/g, "''")}',
+            '${post.content.replace(/'/g, "''")}',
+            '${post.excerpt.replace(/'/g, "''")}',
+            '${post.coverImage}',
+            '${post.category}',
+            '${JSON.stringify(post.tags)}',
+            ${post.published},
+            ${post.likes},
+            ${post.views},
+            NOW(),
+            NOW()
+          )
+        `);
+        results.push(`Inserted post: ${post.title} with coverImage`);
+      } catch (e: any) {
+        results.push(`Insert error for ${post.title}: ${e.message}`);
       }
-      results.push('Updated coverImage for all posts via SQL');
-    } catch (e: any) {
-      results.push(`CoverImage update error: ${e.message}`);
     }
 
-    // Step 6: Verify data
+    // 4. Verify data
     try {
-      const posts = await prisma.$queryRawUnsafe<any[]>(
-        `SELECT id, title, "coverImage" FROM posts ORDER BY id`
-      );
-      results.push(`Verified: ${posts.length} posts in DB`);
-      for (const p of posts) {
-        results.push(`  - ${p.title}: coverImage=${p.coverImage ? 'SET' : 'NULL'}`);
+      const verifyPosts = await prisma.$queryRawUnsafe<any[]>(`
+        SELECT "id", "title", "coverImage" FROM "posts" ORDER BY "id"
+      `);
+      results.push(`Verified ${verifyPosts.length} posts:`);
+      for (const p of verifyPosts) {
+        const cover = p.coverImage || p.coverimage || p['coverImage'] || 'NULL';
+        results.push(`  - ${p.title}: coverImage=${cover}`);
       }
     } catch (e: any) {
       results.push(`Verify error: ${e.message}`);
@@ -162,7 +114,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      message: 'Database initialized',
+      message: 'Database initialized with raw SQL',
       details: results,
     });
   } catch (error: any) {
