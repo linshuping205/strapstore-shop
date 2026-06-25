@@ -1,19 +1,34 @@
-export const dynamic = 'force-dynamic';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const comments = await prisma.comment.findMany({
-      where: { postId: params.id },
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, name: true, content: true, createdAt: true },
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const skip = (page - 1) * limit;
+
+    const [comments, total] = await Promise.all([
+      prisma.comment.findMany({
+        where: { postId: params.id },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: { id: true, name: true, content: true, createdAt: true },
+      }),
+      prisma.comment.count({ where: { postId: params.id } }),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      data: comments,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
-    return NextResponse.json({ success: true, data: comments });
   } catch (error) {
     console.error('Comments GET error:', error);
     return NextResponse.json({ error: 'Database error' }, { status: 500 });
