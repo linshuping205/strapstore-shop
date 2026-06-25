@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Search, Plus, Pencil, Trash2, X, Eye, RefreshCw, ImageIcon } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, Plus, Pencil, Trash2, X, Eye, RefreshCw, ImageIcon, Upload } from 'lucide-react';
 import type { Product, ProductForm } from '@/types/blog';
+import RichTextEditor from '@/components/blog/RichTextEditor';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -398,12 +399,9 @@ export default function ProductsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  rows={3}
-                  placeholder="Product description..."
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                <RichTextEditor
+                  initialContent={form.description}
+                  onChange={(html) => setForm({ ...form, description: html })}
                 />
               </div>
 
@@ -479,8 +477,85 @@ export default function ProductsPage() {
                     className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Image URLs</label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
+                <div className="space-y-3">
+                  {/* Image previews */}
+                  {form.images && (
+                    <div className="flex flex-wrap gap-2">
+                      {form.images.split(',').map((url, i) => {
+                        const trimmed = url.trim();
+                        if (!trimmed) return null;
+                        return (
+                          <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group">
+                            <img src={trimmed} alt="" className="w-full h-full object-cover" />
+                            <button
+                              onClick={() => {
+                                const urls = form.images.split(',').filter((_, idx) => idx !== i);
+                                setForm({ ...form, images: urls.join(',') });
+                              }}
+                              className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X size={10} />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  
+                  {/* Upload button + URL input */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      id="product-image-upload"
+                      onChange={async (e) => {
+                        const files = e.target.files;
+                        if (!files) return;
+                        
+                        const uploadedUrls: string[] = [];
+                        for (const file of Array.from(files)) {
+                          if (file.size > 4 * 1024 * 1024) {
+                            alert(`${file.name} exceeds 4MB limit`);
+                            continue;
+                          }
+                          try {
+                            const filename = `products/${Date.now()}_${file.name}`;
+                            const res = await fetch(`/api/upload?filename=${encodeURIComponent(filename)}`, {
+                              method: 'POST',
+                              body: file,
+                            });
+                            if (res.ok) {
+                              const { url } = await res.json();
+                              uploadedUrls.push(url);
+                            } else {
+                              alert(`Failed to upload ${file.name}`);
+                            }
+                          } catch (err) {
+                            alert(`Upload error: ${file.name}`);
+                          }
+                        }
+                        
+                        if (uploadedUrls.length > 0) {
+                          const current = form.images ? form.images.split(',').filter(Boolean) : [];
+                          setForm({ ...form, images: [...current, ...uploadedUrls].join(', ') });
+                        }
+                        
+                        e.target.value = '';
+                      }}
+                    />
+                    <label
+                      htmlFor="product-image-upload"
+                      className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm cursor-pointer hover:bg-gray-200 transition-colors"
+                    >
+                      <Upload size={16} /> Upload Images
+                    </label>
+                    <span className="text-xs text-gray-400">or paste URLs below</span>
+                  </div>
+                  
                   <input
                     type="text"
                     value={form.images}
@@ -488,7 +563,7 @@ export default function ProductsPage() {
                     placeholder="https://..., https://..."
                     className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Comma separated URLs</p>
+                  <p className="text-xs text-gray-400">Comma separated URLs</p>
                 </div>
               </div>
 
