@@ -382,9 +382,8 @@ export default function BlogsPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
                 <RichTextEditor
-                  value={form.content}
+                  initialContent={form.content}
                   onChange={(html) => setForm({ ...form, content: html })}
-                  placeholder="Write your article here..."
                 />
               </div>
 
