@@ -162,6 +162,8 @@ export default function BlogSearch() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {posts.map((post) => (
             <article key={post.id} className="group">
+              {/* 调试信息 - 显示 coverImage 值 */}
+              <div className="text-[10px] text-red-400 mb-1 font-mono">coverImage: {post.coverImage || 'NULL/EMPTY'}</div>
               <Link href={`/blog/${post.slug}/`}>
                 <div className="aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden mb-4">
                   {!!post.coverImage && post.coverImage.trim() !== '' ? (
