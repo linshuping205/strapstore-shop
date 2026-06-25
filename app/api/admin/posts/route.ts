@@ -1,20 +1,22 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 // GET /api/admin/posts — 获取所有博客文章（含草稿）
 export async function GET() {
   try {
-    // 使用原始 SQL 绕过 Prisma Client schema 问题
     const posts = await prisma.$queryRawUnsafe<any[]>(`
-      SELECT 
-        "id", "slug", "title", "excerpt", "coverImage" as "coverImage", 
-        "category", "tags", "published", "likes", "views", "createdAt", "updatedAt"
-      FROM "posts"
-      ORDER BY "createdAt" DESC
+      SELECT "id", "slug", "title", "content", "excerpt", "coverImage" as "coverImage",
+        "category", "tags", "published", "likes", "views", "metaTitle", "metaDesc",
+        "createdAt", "updatedAt"
+      FROM "posts" ORDER BY "createdAt" DESC
     `);
-    return NextResponse.json(posts.map(p => ({
+    return NextResponse.json(posts.map((p: any) => ({
       ...p,
-      tags: typeof p.tags === 'string' ? JSON.parse(p.tags) : p.tags,
+      tags: typeof p.tags === 'string' ? JSON.parse(p.tags) : (p.tags || []),
+      likes: p.likes ?? 0,
+      views: p.views ?? 0,
     })));
   } catch (error) {
     console.error('Admin posts GET error:', error);
@@ -34,32 +36,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const id = 'post_' + Date.now();
+    const id = 'post_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    const slug = body.slug;
     const title = body.title.replace(/'/g, "''");
-    const slug = body.slug.replace(/'/g, "''");
     const content = (body.content || '').replace(/'/g, "''");
     const excerpt = (body.excerpt || '').replace(/'/g, "''");
-    const coverImage = body.coverImage || '';
-    const category = body.category || 'Guide';
+    const coverImage = (body.coverImage || '').replace(/'/g, "''");
+    const category = (body.category || 'Guide').replace(/'/g, "''");
     const tags = JSON.stringify(Array.isArray(body.tags) ? body.tags : []);
-    const published = body.published === true;
+    const published = body.published === true ? 'true' : 'false';
+    const metaTitle = (body.metaTitle || '').replace(/'/g, "''");
+    const metaDesc = (body.metaDesc || '').replace(/'/g, "''");
 
-    const result = await prisma.$queryRawUnsafe<any[]>(`
-      INSERT INTO "posts" (
-        "id", "slug", "title", "content", "excerpt", "coverImage",
-        "category", "tags", "published", "likes", "views", "createdAt", "updatedAt"
-      ) VALUES (
-        '${id}', '${slug}', '${title}', '${content}', '${excerpt}', '${coverImage}',
-        '${category}', '${tags}', ${published}, 0, 0, NOW(), NOW()
-      )
-      RETURNING "id", "slug", "title", "excerpt", "coverImage" as "coverImage",
-        "category", "tags", "published", "likes", "views", "createdAt", "updatedAt"
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO "posts" ("id", "slug", "title", "content", "excerpt", "coverImage",
+        "category", "tags", "published", "likes", "views", "metaTitle", "metaDesc", "createdAt", "updatedAt")
+      VALUES ('${id}', '${slug}', '${title}', '${content}', '${excerpt}', '${coverImage}',
+        '${category}', '${tags}', ${published}, 0, 0, '${metaTitle}', '${metaDesc}', NOW(), NOW())
     `);
 
-    const post = result[0];
-    post.tags = typeof post.tags === 'string' ? JSON.parse(post.tags) : post.tags;
+    const post = await prisma.$queryRawUnsafe<any[]>(`
+      SELECT * FROM "posts" WHERE "id" = '${id}' LIMIT 1
+    `);
 
-    return NextResponse.json(post, { status: 201 });
+    return NextResponse.json({
+      ...post[0],
+      tags: typeof post[0].tags === 'string' ? JSON.parse(post[0].tags) : (post[0].tags || []),
+      likes: post[0].likes ?? 0,
+      views: post[0].views ?? 0,
+    }, { status: 201 });
   } catch (error: any) {
     console.error('Admin posts POST error:', error);
     if (error.message?.includes('unique constraint') || error.message?.includes('duplicate key')) {
@@ -68,6 +73,6 @@ export async function POST(request: NextRequest) {
         { status: 409 }
       );
     }
-    return NextResponse.json({ error: 'Failed to create post: ' + error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to create post: ' + (error.message || 'Unknown') }, { status: 500 });
   }
 }
