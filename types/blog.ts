@@ -1,3 +1,39 @@
+export interface Product {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  price: number;
+  comparePrice: number | null;
+  images: string[];
+  category: string;
+  material: string | null;
+  tags: string[];
+  stock: number;
+  sku: string | null;
+  isActive: boolean;
+  metaTitle: string | null;
+  metaDesc: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductForm {
+  name: string;
+  slug: string;
+  description: string;
+  price: string;
+  comparePrice: string;
+  images: string;
+  category: string;
+  material: string;
+  stock: string;
+  sku: string;
+  isActive: boolean;
+  metaTitle: string;
+  metaDesc: string;
+}
+
 export interface Post {
   id: string;
   slug: string;
