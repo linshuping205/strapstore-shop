@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Plus, Pencil, Trash2, X, Eye, RefreshCw, Image, Upload } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, X, Eye, RefreshCw } from 'lucide-react';
 import type { Product, ProductForm } from '@/types/blog';
-import RichTextEditor from '@/components/blog/RichTextEditor';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -33,17 +32,12 @@ export default function ProductsPage() {
     try {
       const res = await fetch('/api/products');
       const data = await res.json();
-      console.log('GET /api/products response:', data);
       if (Array.isArray(data)) {
         setProducts(data);
       } else {
-        console.error('API returned non-array:', data);
-        alert('Failed to load products: ' + (data.error || JSON.stringify(data)));
         setProducts([]);
       }
-    } catch (err: any) {
-      console.error('Failed to fetch products:', err);
-      alert('Network error: ' + err.message);
+    } catch {
       setProducts([]);
     } finally {
       setLoading(false);
@@ -62,11 +56,11 @@ export default function ProductsPage() {
     if (!confirm('Create 4 sample products?')) return;
     setLoading(true);
     const ts = Date.now();
-    const sampleProducts = [
+    const samples = [
       {
-        name: 'Italian Buttero Vegetable-Tanned Leather Strap',
-        slug: `italian-buttero-leather-strap-${ts}-1`,
-        description: 'Handcrafted from premium Italian vegetable-tanned leather. Features a rich, natural patina that develops over time.',
+        name: 'Italian Buttero Leather Strap',
+        slug: `italian-buttero-${ts}-1`,
+        description: 'Handcrafted from premium Italian vegetable-tanned leather.',
         price: '89.00',
         comparePrice: '129.00',
         images: 'https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?w=600&h=600&fit=crop',
@@ -78,8 +72,8 @@ export default function ProductsPage() {
       },
       {
         name: 'Crocodile Embossed Calfskin Strap',
-        slug: `crocodile-embossed-calfskin-${ts}-2`,
-        description: 'Luxurious crocodile pattern embossed on premium calfskin. Water-resistant and durable.',
+        slug: `crocodile-embossed-${ts}-2`,
+        description: 'Luxurious crocodile pattern embossed on premium calfskin.',
         price: '99.00',
         comparePrice: '',
         images: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=600&h=600&fit=crop',
@@ -91,8 +85,8 @@ export default function ProductsPage() {
       },
       {
         name: 'Aerospace Fluoroelastomer Sport Strap',
-        slug: `aerospace-fluoroelastomer-sport-${ts}-3`,
-        description: 'High-performance fluoroelastomer rubber strap designed for extreme conditions. Perfect for dive watches.',
+        slug: `aerospace-fluoroelastomer-${ts}-3`,
+        description: 'High-performance fluoroelastomer rubber strap for dive watches.',
         price: '59.00',
         comparePrice: '79.00',
         images: 'https://images.unsplash.com/photo-1434056886845-dbe89f8f1db8?w=600&h=600&fit=crop',
@@ -104,8 +98,8 @@ export default function ProductsPage() {
       },
       {
         name: 'High-Density Woven Nylon Strap',
-        slug: `high-density-woven-nylon-${ts}-4`,
-        description: 'Military-grade ballistic nylon with stainless steel hardware. Lightweight and breathable.',
+        slug: `high-density-nylon-${ts}-4`,
+        description: 'Military-grade ballistic nylon with stainless steel hardware.',
         price: '45.00',
         comparePrice: '',
         images: 'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?w=600&h=600&fit=crop',
@@ -118,34 +112,20 @@ export default function ProductsPage() {
     ];
 
     let created = 0;
-    let failed = 0;
-    const errors: string[] = [];
-    for (const product of sampleProducts) {
+    for (const product of samples) {
       try {
         const res = await fetch('/api/products', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(product),
         });
-        if (res.ok) {
-          created++;
-        } else {
-          const err = await res.json().catch(() => ({}));
-          failed++;
-          errors.push(`${product.name}: ${err.error || res.statusText}`);
-        }
-      } catch (e: any) {
-        failed++;
-        errors.push(`${product.name}: ${e.message}`);
+        if (res.ok) created++;
+      } catch {
+        // ignore
       }
     }
 
-    if (failed > 0) {
-      alert(`Created ${created} / ${sampleProducts.length} products.\nFailed:\n${errors.join('\n')}`);
-    } else {
-      alert(`Created ${created} sample products successfully!`);
-    }
-
+    alert(`Created ${created} sample products`);
     await loadProducts();
     setLoading(false);
   };
@@ -206,8 +186,7 @@ export default function ProductsPage() {
       }
       setShowModal(false);
     } else {
-      const err = await res.json().catch(() => ({}));
-      alert('Save failed: ' + (err.error || res.statusText));
+      alert('Save failed');
     }
   };
 
@@ -216,8 +195,6 @@ export default function ProductsPage() {
     const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
     if (res.ok) {
       setProducts((prev) => prev.filter((p) => p.id !== id));
-    } else {
-      alert('Delete failed');
     }
   };
 
@@ -231,136 +208,140 @@ export default function ProductsPage() {
 
   return (
     <div>
-      {/* Loading state */}
       {loading && (
         <div className="p-8 text-center text-gray-400">Loading...</div>
       )}
 
       {!loading && (
-        <>
-        <h1 className="text-2xl font-semibold text-gray-900">Products</h1>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={loadProducts}
-            disabled={loading}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
-          >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
-          </button>
-          <button
-            onClick={generateSampleProducts}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
-          >
-            <Plus size={18} /> Generate Samples
-          </button>
-          <button
-            onClick={openAdd}
-            className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors"
-          >
-            <Plus size={18} /> Add Product
-          </button>
-        </div>
-      </div>
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-semibold text-gray-900">Products</h1>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={loadProducts}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+                Refresh
+              </button>
+              <button
+                onClick={generateSampleProducts}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+              >
+                <Plus size={18} />
+                Generate Samples
+              </button>
+              <button
+                onClick={openAdd}
+                className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors"
+              >
+                <Plus size={18} />
+                Add Product
+              </button>
+            </div>
+          </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
-        <div className="p-4 border-b border-gray-100">
-          <div className="relative max-w-md">
-            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-            />
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+            <div className="p-4 border-b border-gray-100">
+              <div className="relative max-w-md">
+                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-gray-50 text-gray-600 font-medium">
+                  <tr>
+                    <th className="px-6 py-3.5">Product</th>
+                    <th className="px-6 py-3.5">Category</th>
+                    <th className="px-6 py-3.5">Price</th>
+                    <th className="px-6 py-3.5">Stock</th>
+                    <th className="px-6 py-3.5">Status</th>
+                    <th className="px-6 py-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filtered.map((product) => (
+                    <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                            {product.images && product.images[0] ? (
+                              <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-gray-300 text-xs">No img</span>
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">{product.name}</div>
+                            <div className="text-xs text-gray-400 font-mono">{product.slug}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">{product.category}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-gray-900">${formatPrice(product.price)}</span>
+                          {product.comparePrice && (
+                            <span className="text-xs text-gray-400 line-through">${formatPrice(product.comparePrice)}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">{product.stock}</td>
+                      <td className="px-6 py-4">
+                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                          product.isActive ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {product.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <a
+                            href={`/products/${product.slug}`}
+                            target="_blank"
+                            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md"
+                          >
+                            <Eye size={16} />
+                          </a>
+                          <button
+                            onClick={() => openEdit(product)}
+                            className="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-md"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(product.id)}
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {filtered.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                        No products found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
+      )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 text-gray-600 font-medium">
-              <tr>
-                <th className="px-6 py-3.5">Product</th>
-                <th className="px-6 py-3.5">Category</th>
-                <th className="px-6 py-3.5">Price</th>
-                <th className="px-6 py-3.5">Stock</th>
-                <th className="px-6 py-3.5">Status</th>
-                <th className="px-6 py-3.5 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filtered.map((product) => (
-                <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                        {product.images && product.images[0] ? (
-                          <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <Image size={16} className="text-gray-300" />
-                        )}
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">{product.name}</div>
-                        <div className="text-xs text-gray-400 font-mono">{product.slug}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-gray-600">{product.category}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900">${formatPrice(product.price)}</span>
-                      {product.comparePrice && (
-                        <span className="text-xs text-gray-400 line-through">${formatPrice(product.comparePrice)}</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-gray-600">{product.stock}</td>
-                  <td className="px-6 py-4">
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                      product.isActive ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {product.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <a
-                        href={`/products/${product.slug}`}
-                        target="_blank"
-                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md"
-                      >
-                        <Eye size={16} />
-                      </a>
-                      <button
-                        onClick={() => openEdit(product)}
-                        className="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-md"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
-                    No products found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-xl w-full max-w-2xl mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
@@ -403,9 +384,12 @@ export default function ProductsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <RichTextEditor
-                  initialContent={form.description}
-                  onChange={(html) => setForm({ ...form, description: html })}
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  rows={4}
+                  placeholder="Product description..."
+                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
@@ -481,85 +465,8 @@ export default function ProductsPage() {
                     className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
-                <div className="space-y-3">
-                  {/* Image previews */}
-                  {form.images && (
-                    <div className="flex flex-wrap gap-2">
-                      {form.images.split(',').map((url, i) => {
-                        const trimmed = url.trim();
-                        if (!trimmed) return null;
-                        return (
-                          <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group">
-                            <img src={trimmed} alt="" className="w-full h-full object-cover" />
-                            <button
-                              onClick={() => {
-                                const urls = form.images.split(',').filter((_, idx) => idx !== i);
-                                setForm({ ...form, images: urls.join(',') });
-                              }}
-                              className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <X size={10} />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                  
-                  {/* Upload button + URL input */}
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      id="product-image-upload"
-                      onChange={async (e) => {
-                        const files = e.target.files;
-                        if (!files) return;
-                        
-                        const uploadedUrls: string[] = [];
-                        for (const file of Array.from(files)) {
-                          if (file.size > 4 * 1024 * 1024) {
-                            alert(`${file.name} exceeds 4MB limit`);
-                            continue;
-                          }
-                          try {
-                            const filename = `products/${Date.now()}_${file.name}`;
-                            const res = await fetch(`/api/upload?filename=${encodeURIComponent(filename)}`, {
-                              method: 'POST',
-                              body: file,
-                            });
-                            if (res.ok) {
-                              const { url } = await res.json();
-                              uploadedUrls.push(url);
-                            } else {
-                              alert(`Failed to upload ${file.name}`);
-                            }
-                          } catch (err) {
-                            alert(`Upload error: ${file.name}`);
-                          }
-                        }
-                        
-                        if (uploadedUrls.length > 0) {
-                          const current = form.images ? form.images.split(',').filter(Boolean) : [];
-                          setForm({ ...form, images: [...current, ...uploadedUrls].join(', ') });
-                        }
-                        
-                        e.target.value = '';
-                      }}
-                    />
-                    <label
-                      htmlFor="product-image-upload"
-                      className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm cursor-pointer hover:bg-gray-200 transition-colors"
-                    >
-                      <Upload size={16} /> Upload Images
-                    </label>
-                    <span className="text-xs text-gray-400">or paste URLs below</span>
-                  </div>
-                  
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Image URLs</label>
                   <input
                     type="text"
                     value={form.images}
@@ -567,7 +474,7 @@ export default function ProductsPage() {
                     placeholder="https://..., https://..."
                     className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
-                  <p className="text-xs text-gray-400">Comma separated URLs</p>
+                  <p className="text-xs text-gray-400 mt-1">Comma separated URLs</p>
                 </div>
               </div>
 
@@ -623,8 +530,6 @@ export default function ProductsPage() {
             </div>
           </div>
         </div>
-      )}
-      </>
       )}
     </div>
   );
