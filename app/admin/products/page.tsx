@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Pencil, Trash2, X, Eye, RefreshCw, ImageIcon, Upload } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Plus, Pencil, Trash2, X, Eye, RefreshCw, Image, Upload } from 'lucide-react';
 import type { Product, ProductForm } from '@/types/blog';
 import RichTextEditor from '@/components/blog/RichTextEditor';
 
@@ -297,7 +297,7 @@ export default function ProductsPage() {
                         {product.images && product.images[0] ? (
                           <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
                         ) : (
-                          <ImageIcon size={16} className="text-gray-300" />
+                          <Image size={16} className="text-gray-300" />
                         )}
                       </div>
                       <div>
