@@ -231,6 +231,7 @@ export default function ProductsPage() {
 
   return (
     <div>
+      {/* Loading state */}
       {loading && (
         <div className="p-8 text-center text-gray-400">Loading...</div>
       )}
