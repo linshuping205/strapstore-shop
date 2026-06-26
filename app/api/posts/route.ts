@@ -14,42 +14,49 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    // Build query conditions safely with parameter escaping
-    const conditions: string[] = ['published = true'];
+    // Build where clause using Prisma ORM (no SQL injection risk)
+    const where: any = { published: true };
+
     if (search) {
-      const safeSearch = search.replace(/'/g, "''");
-      conditions.push(`(title ILIKE '%${safeSearch}%' OR content ILIKE '%${safeSearch}%')`);
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { content: { contains: search, mode: 'insensitive' } },
+      ];
     }
+
     if (category) {
-      conditions.push(`category = '${category.replace(/'/g, "''")}'`);
+      where.category = category;
     }
+
     if (tag) {
-      conditions.push(`tags::text LIKE '%"${tag.replace(/'/g, "''")}"%'`);
+      where.tags = { has: tag };
     }
 
-    const whereClause = conditions.join(' AND ');
-
-    const postsQuery = `
-      SELECT id, slug, title, excerpt, "coverImage" as "coverImage", category, tags,
-        likes, views, "createdAt"
-      FROM posts
-      WHERE ${whereClause}
-      ORDER BY "createdAt" DESC
-      LIMIT ${limit} OFFSET ${skip}
-    `;
-
-    const countQuery = `SELECT COUNT(*) as total FROM posts WHERE ${whereClause}`;
-
-    const posts = await prisma.$queryRawUnsafe<any[]>(postsQuery);
-    const countResult = await prisma.$queryRawUnsafe<any[]>(countQuery);
-    const total = parseInt(countResult[0]?.total || '0');
+    const [posts, total] = await Promise.all([
+      prisma.post.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          excerpt: true,
+          coverImage: true,
+          category: true,
+          tags: true,
+          likes: true,
+          views: true,
+          createdAt: true,
+        },
+      }),
+      prisma.post.count({ where }),
+    ]);
 
     return NextResponse.json({
       success: true,
-      data: posts.map((p) => ({
-        ...p,
-        tags: typeof p.tags === 'string' ? JSON.parse(p.tags) : p.tags,
-      })),
+      data: posts,
       pagination: {
         page,
         limit,
