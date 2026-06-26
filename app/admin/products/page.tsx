@@ -229,11 +229,14 @@ export default function ProductsPage() {
     return isNaN(num) ? '0.00' : num.toFixed(2);
   };
 
-  if (loading) return null;
-
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      {loading && (
+        <div className="p-8 text-center text-gray-400">Loading...</div>
+      )}
+
+      {!loading && (
+        <>
         <h1 className="text-2xl font-semibold text-gray-900">Products</h1>
         <div className="flex items-center gap-3">
           <button
@@ -619,6 +622,8 @@ export default function ProductsPage() {
             </div>
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   );
