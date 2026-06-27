@@ -19,36 +19,39 @@ export default function Footer() {
             </p>
           </div>
           <div>
-            <h4 className="font-heading text-white text-base mb-7 font-medium tracking-wide">Explore</h4>
+            <h4 className="font-heading text-white text-base mb-7 font-medium tracking-wide">Shop</h4>
             <ul className="space-y-3.5">
-              <li><Link href="/blog/" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Material Guide</Link></li>
-              <li><Link href="/blog/" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Craft Process</Link></li>
-              <li><Link href="/blog/" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Artisan Stories</Link></li>
-              <li><Link href="/blog/" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Care Guide</Link></li>
+              <li><Link href="/products/" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">All Products</Link></li>
+              <li><Link href="/products/" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Leather Straps</Link></li>
+              <li><Link href="/products/" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">New Arrivals</Link></li>
+              <li><Link href="/products/" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Best Sellers</Link></li>
             </ul>
           </div>
           <div>
-            <h4 className="font-heading text-white text-base mb-7 font-medium tracking-wide">Customer Service</h4>
+            <h4 className="font-heading text-white text-base mb-7 font-medium tracking-wide">Company</h4>
             <ul className="space-y-3.5">
-              <li><Link href="/" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">My Account</Link></li>
-              <li><Link href="/cart/" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Cart</Link></li>
-              <li><Link href="/blog/" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Shipping</Link></li>
-              <li><Link href="/blog/" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Returns</Link></li>
+              <li><Link href="/about/" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">About Us</Link></li>
+              <li><Link href="/blog/" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Journal</Link></li>
+              <li><Link href="/contact/" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Contact</Link></li>
+              <li><Link href="/terms/" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Terms of Service</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="font-heading text-white text-base mb-7 font-medium tracking-wide">Contact</h4>
             <ul className="space-y-3.5">
               <li><a href="mailto:hello@masterstrap.com" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">hello@masterstrap.com</a></li>
-              <li><a href="#" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Instagram</a></li>
-              <li><a href="#" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Pinterest</a></li>
-              <li><a href="#" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Newsletter</a></li>
+              <li><span className="text-sm text-white/55">Florence, Italy</span></li>
+              <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Instagram</a></li>
+              <li><a href="https://pinterest.com" target="_blank" rel="noopener noreferrer" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Pinterest</a></li>
             </ul>
           </div>
         </div>
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-white/35 tracking-wide">
           <p>© {new Date().getFullYear()} Master Strap. All rights reserved.</p>
-          <p>Crafted for watch enthusiasts worldwide</p>
+          <div className="flex items-center gap-4">
+            <Link href="/privacy/" className="hover:text-white/55 transition-colors">Privacy Policy</Link>
+            <Link href="/terms/" className="hover:text-white/55 transition-colors">Terms of Service</Link>
+          </div>
         </div>
       </div>
     </footer>

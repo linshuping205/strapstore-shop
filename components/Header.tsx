@@ -78,6 +78,8 @@ export default function Header() {
             <div className="flex flex-col gap-4 text-sm tracking-widest">
               <Link href="/products/" className="hover:text-gray-600 py-2" onClick={() => setIsMenuOpen(false)}>SHOP</Link>
               <Link href="/blog/" className="hover:text-gray-600 py-2" onClick={() => setIsMenuOpen(false)}>JOURNAL</Link>
+              <Link href="/about/" className="hover:text-gray-600 py-2" onClick={() => setIsMenuOpen(false)}>ABOUT</Link>
+              <Link href="/contact/" className="hover:text-gray-600 py-2" onClick={() => setIsMenuOpen(false)}>CONTACT</Link>
             </div>
           </div>
         </div>
