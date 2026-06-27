@@ -3,9 +3,34 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
+async function ensureSettingsTable() {
+  try {
+    // Try to query the table to see if it exists
+    await prisma.$queryRaw`SELECT 1 FROM "settings" LIMIT 1`;
+  } catch (error: any) {
+    // If table doesn't exist (P2021), create it
+    if (error.code === 'P2021') {
+      await prisma.$executeRaw`
+        CREATE TABLE IF NOT EXISTS "settings" (
+          "id" TEXT NOT NULL,
+          "key" TEXT NOT NULL,
+          "value" TEXT NOT NULL,
+          "updatedAt" TIMESTAMP(3) NOT NULL,
+          CONSTRAINT "settings_pkey" PRIMARY KEY ("id"),
+          CONSTRAINT "settings_key_key" UNIQUE ("key")
+        )
+      `;
+      await prisma.$executeRaw`
+        CREATE INDEX IF NOT EXISTS "settings_key_idx" ON "settings"("key")
+      `;
+    }
+  }
+}
+
 // GET /api/settings - 读取所有设置
 export async function GET() {
   try {
+    await ensureSettingsTable();
     const settings = await prisma.settings.findMany();
     const result: Record<string, string> = {};
     settings.forEach((s) => {
@@ -21,10 +46,11 @@ export async function GET() {
 // PUT /api/settings - 更新设置（支持批量）
 export async function PUT(request: NextRequest) {
   try {
+    await ensureSettingsTable();
     const body = await request.json();
     const keys = Object.keys(body);
 
-    // 使用 upsert 创建或更新每个设置
+    // Use upsert to create or update each setting
     await prisma.$transaction(
       keys.map((key) =>
         prisma.settings.upsert({
