@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Package, FileText, ShoppingCart, TrendingUp, Heart, Eye, MessageCircle } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -115,14 +116,18 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl border border-gray-100 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
           <div className="grid grid-cols-2 gap-3">
-            {['Add Product', 'New Blog Post', 'View Orders', 'Settings'].map((action) => (
-              <button
-                key={action}
-                className="p-4 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 transition-all"
-              >
-                {action}
-              </button>
-            ))}
+            <Link href="/admin/products/edit/new/" className="p-4 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 transition-all text-center">
+              Add Product
+            </Link>
+            <Link href="/admin/blogs/edit/new/" className="p-4 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 transition-all text-center">
+              New Blog Post
+            </Link>
+            <Link href="/admin/orders/" className="p-4 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 transition-all text-center">
+              View Orders
+            </Link>
+            <Link href="/admin/settings/" className="p-4 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 transition-all text-center">
+              Settings
+            </Link>
           </div>
         </div>
       </div>

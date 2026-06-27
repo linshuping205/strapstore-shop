@@ -8,6 +8,7 @@ import {
   Package,
   FileText,
   ShoppingCart,
+  Settings,
   ChevronLeft,
   ChevronRight,
   LogOut
@@ -18,6 +19,7 @@ const navItems = [
   { href: '/admin/products', label: 'Products', icon: Package },
   { href: '/admin/blogs', label: 'Blogs', icon: FileText },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
+  { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

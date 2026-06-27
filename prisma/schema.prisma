@@ -103,3 +103,12 @@ model Comment {
 
   @@map("comments")
 }
+
+model Settings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
