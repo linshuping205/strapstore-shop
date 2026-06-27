@@ -2,17 +2,20 @@ import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-04-10',
-});
-
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   const payload = await request.text();
   const sig = request.headers.get('stripe-signature') || '';
+
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!stripeKey) {
+    return NextResponse.json({ error: 'Stripe is not configured' }, { status: 500 });
+  }
+
+  const stripe = new Stripe(stripeKey, { apiVersion: '2024-04-10' });
 
   let event: Stripe.Event;
 

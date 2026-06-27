@@ -6,7 +6,11 @@ import { loadStripe } from '@stripe/stripe-js';
 import Link from 'next/link';
 import { ShoppingBag, CreditCard, ArrowLeft, Loader2 } from 'lucide-react';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+function getStripe() {
+  const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+  if (!key) return null;
+  return loadStripe(key);
+}
 
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
@@ -51,7 +55,7 @@ export default function CheckoutPage() {
     }
 
     clearCart();
-    const stripe = await stripePromise;
+    const stripe = await getStripe();
     await stripe?.redirectToCheckout({ sessionId });
   };
 

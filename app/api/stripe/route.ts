@@ -1,14 +1,16 @@
 import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-04-10',
-});
-
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
   try {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      return NextResponse.json({ error: 'Stripe is not configured' }, { status: 500 });
+    }
+    const stripe = new Stripe(stripeKey, { apiVersion: '2024-04-10' });
+
     const { items, email, name, address, city, country, postalCode } = await req.json();
 
     const lineItems = items.map((item: any) => ({

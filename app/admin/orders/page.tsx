@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Search, Eye, Package, Truck, CheckCircle, Loader2, RefreshCw, XCircle } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface OrderItem {
   id: string;
@@ -30,7 +31,7 @@ interface Order {
   }[];
 }
 
-const statusConfig: Record<string, { color: string; icon: any; label: string }> = {
+const statusConfig: Record<string, { color: string; icon: LucideIcon; label: string }> = {
   PENDING: { color: 'bg-amber-50 text-amber-600', icon: Package, label: 'Pending' },
   PAID: { color: 'bg-blue-50 text-blue-600', icon: Package, label: 'Paid' },
   SHIPPED: { color: 'bg-purple-50 text-purple-600', icon: Truck, label: 'Shipped' },
