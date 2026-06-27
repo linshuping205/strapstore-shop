@@ -63,7 +63,7 @@ export default function AboutPage() {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100">
             <Image
-              src="https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&h=600&fit=crop"
+              src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&h=600&fit=crop"
               alt="Artisan working on leather"
               fill
               className="object-cover"

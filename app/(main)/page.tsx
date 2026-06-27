@@ -110,7 +110,7 @@ export default async function HomePage() {
                 <div className="group bg-white rounded overflow-hidden border border-gray-100 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(0,0,0,0.06)] hover:border-transparent transition-all cursor-pointer">
                   <div className="relative aspect-square overflow-hidden bg-gray-50">
                     <span className="absolute top-4 left-4 bg-accent text-white text-[10px] px-3.5 py-1.5 rounded-full font-semibold tracking-wider uppercase z-10">Best</span>
-                    <Image src="https://images.unsplash.com/photo-1434056886845-dbe89f8f1db8?w=600&h=600&fit=crop" alt="Aerospace Fluoroelastomer Strap" fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="25vw" />
+                    <Image src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=600&h=600&fit=crop" alt="Aerospace Fluoroelastomer Strap" fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="25vw" />
                   </div>
                   <div className="p-6">
                     <div className="text-[10px] tracking-[1.5px] uppercase text-accent font-semibold mb-2.5">Rubber</div>

@@ -85,7 +85,7 @@ async function main() {
         title: 'Saddle Stitch: Every Stitch Is a Mark of Time',
         content: '<p>A visit to our handcraft workshop. Learn why traditional saddle stitch outlasts machine sewing and what defines a good stitch in an artisan\'s eyes.</p><p>Each saddle stitch is made with two needles passing through the same hole from opposite sides, creating a lock that won\'t unravel even if one thread breaks.</p>',
         excerpt: 'A visit to our handcraft workshop. Learn why traditional saddle stitch outlasts machine sewing.',
-        coverImage: 'https://images.unsplash.com/photo-1434056886845-dbe89f8f1db8?w=800&h=500&fit=crop',
+        coverImage: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&h=500&fit=crop',
         category: 'Review',
         tags: ['craftsmanship', 'saddle-stitch', 'workshop'],
         published: true,

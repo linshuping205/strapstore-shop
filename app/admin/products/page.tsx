@@ -72,7 +72,7 @@ export default function ProductsPage() {
         description: 'High-performance fluoroelastomer rubber strap for dive watches.',
         price: '59.00',
         comparePrice: '79.00',
-        images: 'https://images.unsplash.com/photo-1434056886845-dbe89f8f1db8?w=600&h=600&fit=crop',
+        images: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=600&h=600&fit=crop',
         category: 'Rubber',
         material: 'Fluoroelastomer',
         stock: '100',
