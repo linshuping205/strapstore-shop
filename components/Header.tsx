@@ -1,12 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
 
+interface SiteSettings {
+  siteTitle?: string;
+  tagline?: string;
+  siteIcon?: string;
+}
+
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [settings, setSettings] = useState<SiteSettings>({});
   const itemCount = useCart((state) => state.itemCount());
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((res) => res.ok ? res.json() : {})
+      .then((data) => setSettings(data))
+      .catch(() => { /* ignore */ });
+  }, []);
+
+  const siteTitle = settings.siteTitle || 'MASTER STRAP';
+  const tagline = settings.tagline || 'EST. 2024';
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
@@ -30,10 +47,10 @@ export default function Header() {
           <div className="flex-shrink-0 text-center">
             <Link href="/" className="block">
               <h1 className="text-lg md:text-xl font-serif tracking-[0.2em] font-semibold">
-                MASTER STRAP
+                {siteTitle}
               </h1>
               <p className="text-[10px] md:text-xs tracking-[0.15em] text-gray-500 mt-0.5">
-                EST. 2024
+                {tagline}
               </p>
             </Link>
           </div>
