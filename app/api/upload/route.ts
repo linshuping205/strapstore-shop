@@ -9,13 +9,10 @@ export async function POST(request: Request) {
     const { searchParams } = new URL(request.url);
     const filename = searchParams.get('filename') || 'image.jpg';
 
-    const arrayBuffer = await request.arrayBuffer();
-    if (arrayBuffer.byteLength === 0) {
+    const blob = await request.blob();
+    if (blob.size === 0) {
       return NextResponse.json({ error: 'Empty file' }, { status: 400 });
     }
-
-    const contentType = request.headers.get('content-type') || 'application/octet-stream';
-    const blob = new Blob([arrayBuffer], { type: contentType });
 
     const result = await put(filename, blob, {
       access: 'public',
