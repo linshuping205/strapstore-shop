@@ -1,61 +1,59 @@
-import { create } from 'zustand'
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-interface CartItem {
-  id: string
-  name: string
-  price: number
-  quantity: number
-  image?: string
+export interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  quantity: number;
+  slug: string;
 }
 
 interface CartStore {
-  items: CartItem[]
-  addToCart: (product: any) => void
-  removeFromCart: (id: string) => void
-  updateQuantity: (id: string, quantity: number) => void
-  clearCart: () => void
-  total: () => number
+  items: CartItem[];
+  addItem: (item: CartItem) => void;
+  removeItem: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
+  clearCart: () => void;
+  total: () => number;
+  itemCount: () => number;
 }
 
-export const useCartStore = create<CartStore>((set, get) => ({
-  items: [],
-  
-  addToCart: (product) => set((state) => {
-    const existing = state.items.find(item => item.id === product.id)
-    const addQty = product.quantity || 1
-    if (existing) {
-      return {
-        items: state.items.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + addQty }
-            : item
-        )
-      }
-    }
-    return {
-      items: [...state.items, {
-        id: product.id,
-        name: product.name,
-        price: parseFloat(product.price),
-        quantity: addQty,
-        image: product.images?.[0]
-      }]
-    }
-  }),
-  
-  removeFromCart: (id) => set((state) => ({
-    items: state.items.filter(item => item.id !== id)
-  })),
-  
-  updateQuantity: (id, quantity) => set((state) => ({
-    items: state.items.map(item =>
-      item.id === id ? { ...item, quantity } : item
-    )
-  })),
-  
-  clearCart: () => set({ items: [] }),
-  
-  total: () => {
-    return get().items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  }
-}))
+export const useCart = create<CartStore>()(
+  persist(
+    (set, get) => ({
+      items: [],
+      addItem: (item) => {
+        const existing = get().items.find((i) => i.id === item.id);
+        if (existing) {
+          set({
+            items: get().items.map((i) =>
+              i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i
+            ),
+          });
+        } else {
+          set({ items: [...get().items, item] });
+        }
+      },
+      removeItem: (id) => set({ items: get().items.filter((i) => i.id !== id) }),
+      updateQuantity: (id, quantity) => {
+        if (quantity < 1) {
+          set({ items: get().items.filter((i) => i.id !== id) });
+        } else {
+          set({
+            items: get().items.map((i) => (i.id === id ? { ...i, quantity } : i)),
+          });
+        }
+      },
+      clearCart: () => set({ items: [] }),
+      total: () => get().items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+      itemCount: () => get().items.reduce((sum, item) => sum + item.quantity, 0),
+    }),
+    { name: 'cart-storage' }
+  )
+);
+
+// Backward-compatible export for old imports
+export const useCartStore = useCart;
+export type { CartStore };

@@ -1,17 +1,24 @@
 'use client'
 
 import { useState } from 'react'
-import { useCartStore } from '@/lib/store'
+import { useCart } from '@/components/CartProvider'
 import { ShoppingCart, Check, Package } from 'lucide-react'
 
 export default function AddToCartButton({ product, disabled }: { product: any; disabled?: boolean }) {
   const [added, setAdded] = useState(false)
   const [quantity, setQuantity] = useState(1)
-  const addToCart = useCartStore((state) => state.addToCart)
+  const addItem = useCart((state) => state.addItem)
 
   const handleClick = () => {
     if (disabled) return
-    addToCart({ ...product, quantity })
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: Number(product.price),
+      image: product.images?.[0] || '',
+      quantity,
+      slug: product.slug,
+    })
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
