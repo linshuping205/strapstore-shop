@@ -18,25 +18,41 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    console.log('Request body:', body);
+    // Input validation
+    if (!body.name || typeof body.name !== 'string' || body.name.trim().length < 1) {
+      return NextResponse.json({ error: 'Product name is required' }, { status: 400 });
+    }
+    if (!body.slug || typeof body.slug !== 'string' || body.slug.trim().length < 1) {
+      return NextResponse.json({ error: 'Slug is required' }, { status: 400 });
+    }
+    const price = parseFloat(body.price);
+    if (isNaN(price) || price <= 0) {
+      return NextResponse.json({ error: 'Valid price is required' }, { status: 400 });
+    }
+    const stock = parseInt(body.stock);
+    if (isNaN(stock) || stock < 0) {
+      return NextResponse.json({ error: 'Valid stock is required' }, { status: 400 });
+    }
+
+    const images = Array.isArray(body.images)
+      ? body.images
+      : (body.images
+          ? body.images.split(',').map((s: string) => s.trim()).filter(Boolean)
+          : []);
 
     const data = {
-      slug: body.slug,
-      name: body.name,
-      description: body.description || null,
-      price: parseFloat(body.price) || 0,
+      slug: body.slug.trim(),
+      name: body.name.trim(),
+      description: typeof body.description === 'string' ? body.description.trim() : null,
+      price,
       comparePrice: body.comparePrice ? parseFloat(body.comparePrice) : null,
-      images: Array.isArray(body.images)
-        ? body.images
-        : (body.images
-            ? body.images.split(',').map((s: string) => s.trim()).filter(Boolean)
-            : []),
-      category: body.category || null,
-      material: body.material || null,
-      sku: body.sku || null,
-      stock: parseInt(body.stock) || 0,
-      metaTitle: body.metaTitle || null,
-      metaDesc: body.metaDesc || null,
+      images,
+      category: typeof body.category === 'string' ? body.category.trim() : null,
+      material: typeof body.material === 'string' ? body.material.trim() : null,
+      sku: typeof body.sku === 'string' ? body.sku.trim() : null,
+      stock,
+      metaTitle: typeof body.metaTitle === 'string' ? body.metaTitle.trim() : null,
+      metaDesc: typeof body.metaDesc === 'string' ? body.metaDesc.trim() : null,
       tags: [],
       isActive: true,
     };

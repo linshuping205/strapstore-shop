@@ -4,7 +4,7 @@ declare global {
   var prisma: PrismaClient | undefined
 }
 
-// 延迟初始化：避免导入时立即创建连接
+// Singleton: avoid creating multiple PrismaClient instances during hot reload in development
 export const prisma = global.prisma || new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error'] : ['error'],
 })

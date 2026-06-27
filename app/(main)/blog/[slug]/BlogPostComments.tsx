@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { formatDateShort } from "@/lib/utils";
 
 interface Comment {
   id: string;
@@ -56,7 +57,8 @@ export default function BlogPostComments({ postId }: BlogPostCommentsProps) {
         setEmail("");
         fetchComments();
       } else {
-        alert("Failed to post comment");
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || "Failed to post comment");
       }
     } catch (e) {
       console.error("Submit comment failed", e);
@@ -124,11 +126,7 @@ export default function BlogPostComments({ postId }: BlogPostCommentsProps) {
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium text-gray-900">{comment.name}</span>
                 <span className="text-xs text-gray-400">
-                  {new Date(comment.createdAt).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
+                  {formatDateShort(comment.createdAt)}
                 </span>
               </div>
               <p className="text-gray-700">{comment.content}</p>

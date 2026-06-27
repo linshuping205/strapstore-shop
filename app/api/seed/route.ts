@@ -2,24 +2,31 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export async function GET() {
+  // Protect: only allow in development or with explicit flag
+  if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_SEED) {
+    return NextResponse.json(
+      { success: false, error: 'Seed is disabled in production' },
+      { status: 403 }
+    );
+  }
+
   const results: string[] = [];
 
   try {
-    // 1. Check current schema and columns
+    // 1. Check current schema and columns via Prisma (safe)
     try {
-      const columns = await prisma.$queryRawUnsafe<any[]>(
-        `SELECT column_name FROM information_schema.columns WHERE table_name = 'posts' ORDER BY ordinal_position`
-      );
-      results.push('Post columns: ' + columns.map(c => c.column_name).join(', '));
+      const posts = await prisma.post.findMany({ take: 1, select: { id: true } });
+      results.push('Database connection OK');
     } catch (e: any) {
       results.push('Schema check error: ' + e.message);
     }
 
     // 2. Check if seed posts already exist
-    const existingPosts = await prisma.$queryRawUnsafe<any[]>(
-      `SELECT id FROM "posts" WHERE id IN ('post_1', 'post_2', 'post_3')`
-    );
-    const existingIds = new Set(existingPosts.map(p => p.id));
+    const existingPosts = await prisma.post.findMany({
+      where: { id: { in: ['post_1', 'post_2', 'post_3'] } },
+      select: { id: true },
+    });
+    const existingIds = new Set(existingPosts.map((p) => p.id));
     results.push(`Existing seed posts: ${existingIds.size}`);
 
     // 3. Only insert missing seed posts (DO NOT delete existing data)
@@ -72,14 +79,7 @@ export async function GET() {
         continue;
       }
       try {
-        const title = post.title.replace(/'/g, "''");
-        const content = post.content.replace(/'/g, "''");
-        const excerpt = post.excerpt.replace(/'/g, "''");
-
-        await prisma.$executeRawUnsafe(
-          `INSERT INTO "posts" ("id", "slug", "title", "content", "excerpt", "coverImage", "category", "tags", "published", "likes", "views", "createdAt", "updatedAt")
-           VALUES ('${post.id}', '${post.slug}', '${title}', '${content}', '${excerpt}', '${post.coverImage}', '${post.category}', '${JSON.stringify(post.tags)}', ${post.published}, ${post.likes}, ${post.views}, NOW(), NOW())`
-        );
+        await prisma.post.create({ data: post });
         results.push(`Inserted post: ${post.title}`);
         insertedCount++;
       } catch (e: any) {
@@ -88,10 +88,11 @@ export async function GET() {
     }
 
     // 4. Also seed products if missing
-    const existingProducts = await prisma.$queryRawUnsafe<any[]>(
-      `SELECT id FROM "products" WHERE id IN ('prod_1', 'prod_2')`
-    );
-    const existingProdIds = new Set(existingProducts.map(p => p.id));
+    const existingProducts = await prisma.product.findMany({
+      where: { id: { in: ['prod_1', 'prod_2'] } },
+      select: { id: true },
+    });
+    const existingProdIds = new Set(existingProducts.map((p) => p.id));
 
     const products = [
       {
@@ -125,13 +126,7 @@ export async function GET() {
     for (const product of products) {
       if (existingProdIds.has(product.id)) continue;
       try {
-        const name = product.name.replace(/'/g, "''");
-        const description = product.description.replace(/'/g, "''");
-
-        await prisma.$executeRawUnsafe(
-          `INSERT INTO "products" ("id", "slug", "name", "description", "price", "category", "material", "tags", "stock", "sku", "isActive", "createdAt", "updatedAt")
-           VALUES ('${product.id}', '${product.slug}', '${name}', '${description}', ${product.price}, '${product.category}', '${product.material}', '${JSON.stringify(product.tags)}', ${product.stock}, '${product.sku}', ${product.isActive}, NOW(), NOW())`
-        );
+        await prisma.product.create({ data: product });
         results.push(`Inserted product: ${product.name}`);
       } catch (e: any) {
         results.push(`Insert product error: ${e.message}`);
@@ -140,12 +135,14 @@ export async function GET() {
 
     // 5. Verify posts
     try {
-      const verifyPosts = await prisma.$queryRawUnsafe<any[]>(
-        `SELECT "id", "title", "coverImage" FROM "posts" ORDER BY "id" LIMIT 10`
-      );
+      const verifyPosts = await prisma.post.findMany({
+        select: { id: true, title: true, coverImage: true },
+        orderBy: { id: 'asc' },
+        take: 10,
+      });
       results.push(`Total posts in DB: ${verifyPosts.length}`);
       for (const p of verifyPosts) {
-        const cover = p.coverImage || p.coverimage || 'NULL';
+        const cover = p.coverImage || 'NULL';
         results.push(`  - ${p.title}: coverImage=${cover}`);
       }
     } catch (e: any) {

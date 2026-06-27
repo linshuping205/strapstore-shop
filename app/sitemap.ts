@@ -1,4 +1,4 @@
-﻿import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/prisma'
 import type { MetadataRoute } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -12,7 +12,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   try {
-    const products = await prisma.product.findMany({ select: { slug: true, updatedAt: true } })
+    const products = await prisma.product.findMany({
+      select: { slug: true, updatedAt: true },
+      take: 5000,
+    })
     products.forEach((p) => {
       routes.push({
         url: `${baseUrl}/products/${p.slug}/`,
@@ -26,7 +29,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const posts = await prisma.post.findMany({
       where: { published: true },
-      select: { slug: true, updatedAt: true }
+      select: { slug: true, updatedAt: true },
+      take: 5000,
     })
     posts.forEach((p) => {
       routes.push({

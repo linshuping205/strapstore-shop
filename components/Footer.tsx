@@ -63,9 +63,9 @@ export default async function Footer() {
             <h4 className="font-heading text-white text-base mb-7 font-medium tracking-wide">Contact</h4>
             <ul className="space-y-3.5">
               <li><a href={`mailto:${adminEmail}`} className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">{adminEmail}</a></li>
-              <li><span className="text-sm text-white/55">Florence, Italy</span></li>
-              <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Instagram</a></li>
-              <li><a href="https://pinterest.com" target="_blank" rel="noopener noreferrer" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Pinterest</a></li>
+              <li><span className="text-sm text-white/55">{settings.contactAddress || 'Florence, Italy'}</span></li>
+              <li><a href={settings.instagramUrl || 'https://instagram.com'} target="_blank" rel="noopener noreferrer" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Instagram</a></li>
+              <li><a href={settings.pinterestUrl || 'https://pinterest.com'} target="_blank" rel="noopener noreferrer" className="text-sm text-white/55 hover:text-accent transition-all hover:translate-x-1 inline-block">Pinterest</a></li>
             </ul>
           </div>
         </div>

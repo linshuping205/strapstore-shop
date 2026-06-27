@@ -13,6 +13,7 @@ export default function DashboardPage() {
     { label: 'Total Views', value: '0', icon: Eye, change: '' },
     { label: 'Total Comments', value: '0', icon: MessageCircle, change: '' },
   ]);
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,9 +30,12 @@ export default function DashboardPage() {
         const totalViews = posts.reduce((sum: number, p: any) => sum + (p.views || 0), 0);
         const totalComments = posts.reduce((sum: number, p: any) => sum + (p._count?.comments || 0), 0);
 
+        const orders = Array.isArray(ordersRes) ? ordersRes : [];
+        setRecentOrders(orders.slice(0, 5));
+
         setStats([
           { label: 'Total Products', value: String(productsRes.length || 0), icon: Package, change: '' },
-          { label: 'Total Orders', value: String(ordersRes.length || 0), icon: ShoppingCart, change: '' },
+          { label: 'Total Orders', value: String(orders.length || 0), icon: ShoppingCart, change: '' },
           { label: 'Blog Posts', value: String(posts.length || 0), icon: FileText, change: '' },
           { label: 'Total Likes', value: String(totalLikes), icon: Heart, change: '' },
           { label: 'Total Views', value: String(totalViews), icon: Eye, change: '' },
@@ -87,29 +91,28 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl border border-gray-100 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Orders</h3>
           <div className="space-y-3">
-            {[
-              { id: '#ORD-001', customer: 'John Doe', amount: '$89.00', status: 'Completed' },
-              { id: '#ORD-002', customer: 'Jane Smith', amount: '$156.00', status: 'Processing' },
-              { id: '#ORD-003', customer: 'Mike Brown', amount: '$45.00', status: 'Pending' },
-              { id: '#ORD-004', customer: 'Sarah Lee', amount: '$234.00', status: 'Completed' },
-            ].map((order) => (
-              <div key={order.id} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{order.id}</p>
-                  <p className="text-xs text-gray-500">{order.customer}</p>
+            {recentOrders.length > 0 ? (
+              recentOrders.map((order: any) => (
+                <div key={order.id} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">#{order.id.slice(-6)}</p>
+                    <p className="text-xs text-gray-500">{order.name || order.email}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-900">${Number(order.total).toFixed(2)}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      order.status === 'PAID' || order.status === 'DELIVERED' ? 'bg-green-50 text-green-600' :
+                      order.status === 'SHIPPED' ? 'bg-blue-50 text-blue-600' :
+                      'bg-amber-50 text-amber-600'
+                    }`}>
+                      {order.status}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">{order.amount}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    order.status === 'Completed' ? 'bg-green-50 text-green-600' :
-                    order.status === 'Processing' ? 'bg-blue-50 text-blue-600' :
-                    'bg-amber-50 text-amber-600'
-                  }`}>
-                    {order.status}
-                  </span>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-sm text-gray-400 py-4">No orders yet</p>
+            )}
           </div>
         </div>
 

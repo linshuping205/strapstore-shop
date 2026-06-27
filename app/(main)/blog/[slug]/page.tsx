@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { Suspense } from 'react';
 import BlogPostActions from './BlogPostActions';
 import BlogPostComments from './BlogPostComments';
+import { sanitizeHtml } from '@/lib/utils';
 
 // 静态 metadata 避免 React 并发渲染 Bug
 export const metadata = {
@@ -77,10 +78,10 @@ async function PostData({ slug }: { slug: string }) {
           )}
         </div>
 
-        {/* 文章内容 */}
+        {/* 文章内容 - 已净化 XSS */}
         <div
           className="prose prose-lg max-w-none mb-12"
-          dangerouslySetInnerHTML={{ __html: post.content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
         />
 
         {/* 互动区域 */}

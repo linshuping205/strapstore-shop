@@ -6,7 +6,7 @@ function toBase64(str: string): string {
     return btoa(str);
   } catch {
     // Fallback for environments where btoa is not available
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
     let result = '';
     let i = 0;
     while (i < str.length) {
@@ -25,10 +25,18 @@ function toBase64(str: string): string {
 export function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/admin')) {
     const auth = request.headers.get('authorization');
-    const adminPassword = process.env.ADMIN_PASSWORD || '';
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    // Require password to be set and at least 4 characters
+    if (!adminPassword || adminPassword.length < 4) {
+      return new NextResponse('Admin password not configured', {
+        status: 500,
+      });
+    }
+
     const expected = 'Basic ' + toBase64('admin:' + adminPassword);
 
-    if (!adminPassword || auth !== expected) {
+    if (auth !== expected) {
       return new NextResponse('Authentication required', {
         status: 401,
         headers: { 'WWW-Authenticate': 'Basic realm="Admin"' },

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Send, User } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 
 interface Comment {
   id: string;
@@ -51,15 +52,6 @@ export default function PostComments({ postId }: PostCommentsProps) {
     }
     setSubmitting(false);
   };
-
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
 
   return (
     <div className="mt-16">

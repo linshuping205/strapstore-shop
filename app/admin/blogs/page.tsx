@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Search, Plus, Pencil, Trash2, Eye, RefreshCw, FileText } from 'lucide-react';
 import type { Post } from '@/types/blog';
+import { formatDateShort } from '@/lib/utils';
 
 export default function BlogsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -185,7 +186,7 @@ export default function BlogsPage() {
                   <td className="px-6 py-4 text-gray-600 text-center">{post.likes || 0}</td>
                   <td className="px-6 py-4 text-gray-600 text-center">{post.views || 0}</td>
                   <td className="px-6 py-4 text-gray-600">
-                    {new Date(post.createdAt).toLocaleDateString()}
+                    {formatDateShort(post.createdAt)}
                   </td>
                   <td className="px-6 py-4">
                     <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
