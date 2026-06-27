@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import AddToCartButton from './AddToCartButton';
+import ProductReviews from '@/components/products/ProductReviews';
 import { ArrowLeft, Truck, Shield, RotateCcw, Star, Package } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -14,15 +15,21 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
   if (!product) notFound();
 
-  const relatedProducts = await prisma.product.findMany({
-    where: {
-      category: product.category,
-      id: { not: product.id },
-      isActive: true,
-    },
-    take: 4,
-    orderBy: { createdAt: 'desc' },
-  });
+  const [relatedProducts, approvedReviews] = await Promise.all([
+    prisma.product.findMany({
+      where: {
+        category: product.category,
+        id: { not: product.id },
+        isActive: true,
+      },
+      take: 4,
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.productReview.findMany({
+      where: { productId: product.id, status: 'APPROVED' },
+      select: { rating: true },
+    }),
+  ]);
 
   const formatPrice = (price: any) => {
     const num = Number(price);
@@ -33,6 +40,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const discount = hasComparePrice
     ? Math.round((1 - Number(product.price) / Number(product.comparePrice)) * 100)
     : 0;
+
+  const avgRating = approvedReviews.length > 0
+    ? Math.round((approvedReviews.reduce((sum, r) => sum + r.rating, 0) / approvedReviews.length) * 10) / 10
+    : 0;
+  const reviewCount = approvedReviews.length;
 
   return (
     <div className="min-h-screen bg-white">
@@ -88,10 +100,16 @@ export default async function ProductPage({ params }: { params: { slug: string }
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((i) => (
-                    <Star key={i} size={16} className="text-yellow-400 fill-yellow-400" />
+                    <Star
+                      key={i}
+                      size={16}
+                      className={i <= Math.round(avgRating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}
+                    />
                   ))}
                 </div>
-                <span className="text-sm text-gray-400">48 Reviews</span>
+                <span className="text-sm text-gray-400">
+                  {reviewCount > 0 ? `${avgRating} · ${reviewCount} Review${reviewCount > 1 ? 's' : ''}` : 'No reviews yet'}
+                </span>
               </div>
             </div>
 
@@ -180,6 +198,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
           </div>
         </div>
       )}
+
+      {/* Product Reviews */}
+      <div className="max-w-7xl mx-auto px-4 py-8 border-t border-gray-100">
+        <ProductReviews productId={product.id} />
+      </div>
     </div>
   );
 }

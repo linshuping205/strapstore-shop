@@ -27,6 +27,7 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   orderItems  OrderItem[]
+  reviews     ProductReview[]
 
   @@index([category])
   @@index([isActive])
@@ -123,4 +124,28 @@ model PostInteraction {
   @@unique([postId, type, ipHash])
   @@index([postId])
   @@map("post_interactions")
+}
+
+model ProductReview {
+  id        String   @id @default(cuid())
+  productId String
+  name      String
+  email     String
+  rating    Int
+  title     String
+  content   String   @db.Text
+  status    ReviewStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([status])
+  @@map("product_reviews")
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
