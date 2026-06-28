@@ -181,7 +181,7 @@ export default function AdminPage() {
           </form>
 
           <p className="mt-4 text-center text-xs text-gray-400">
-            Default: admin / admin123
+            Default: admin / MasterStrap@2024!
           </p>
         </div>
       </div>
