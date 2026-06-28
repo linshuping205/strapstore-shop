@@ -150,6 +150,9 @@ export default function BlogEditPage() {
       const filename = `blogs/${Date.now()}_${file.name}`;
       const res = await fetch(`/api/upload?filename=${encodeURIComponent(filename)}`, {
         method: 'POST',
+        headers: {
+          'x-admin-auth': 'admin-secret-token-2024',
+        },
         body: file,
       });
       if (res.ok) {

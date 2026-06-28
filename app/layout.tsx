@@ -82,8 +82,13 @@ export async function generateMetadata(): Promise<Metadata> {
   // Set favicon if siteIcon is configured
   if (siteIcon) {
     metadata.icons = {
-      icon: siteIcon,
-      shortcut: siteIcon,
+      icon: { url: siteIcon, type: 'image/png' },
+      shortcut: { url: siteIcon, type: 'image/png' },
+    };
+  } else {
+    // Default favicon fallback
+    metadata.icons = {
+      icon: '/favicon.ico',
     };
   }
 

@@ -7,16 +7,14 @@ export const maxDuration = 60;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
 
+const ADMIN_AUTH_TOKEN = 'admin-secret-token-2024';
+
 export async function POST(request: NextRequest) {
   try {
-    // Simple admin auth check via Basic Auth header
-    const auth = request.headers.get('authorization');
-    const adminPassword = process.env.ADMIN_PASSWORD || '';
-    if (adminPassword) {
-      const expected = 'Basic ' + Buffer.from('admin:' + adminPassword).toString('base64');
-      if (auth !== expected) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
+    // Admin auth check via x-admin-auth header (same as other admin APIs)
+    const adminAuth = request.headers.get('x-admin-auth');
+    if (adminAuth !== ADMIN_AUTH_TOKEN) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);

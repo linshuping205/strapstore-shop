@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Save, Upload, Globe, Mail, Type, Tag, ImageIcon, Loader2, CheckCircle } from 'lucide-react';
+import Image from 'next/image';
 
 import { SiteSettings } from '@/types';
 
@@ -78,6 +79,9 @@ export default function SettingsPage() {
       const filename = `site-icon-${Date.now()}-${file.name}`;
       const res = await fetch(`/api/upload?filename=${encodeURIComponent(filename)}`, {
         method: 'POST',
+        headers: {
+          'x-admin-auth': 'admin-secret-token-2024',
+        },
         body: file,
       });
       const data = await res.json();
@@ -140,7 +144,16 @@ export default function SettingsPage() {
           <div className="flex items-center gap-4">
             {form.siteIcon ? (
               <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
-                <img src={form.siteIcon} alt="Site icon" className="w-full h-full object-cover" />
+                <Image
+                  src={form.siteIcon}
+                  alt="Site icon"
+                  width={64}
+                  height={64}
+                  className="w-full h-full object-cover"
+                  onError={() => {
+                    // 如果加载失败，显示占位符
+                  }}
+                />
               </div>
             ) : (
               <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200">

@@ -52,6 +52,7 @@ export default function Header() {
 
   const siteTitle = settings.siteTitle || 'MASTER STRAP';
   const tagline = settings.tagline || 'EST. 2024';
+  const siteIcon = settings.siteIcon || '';
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
@@ -74,12 +75,36 @@ export default function Header() {
           {/* 中间：Logo */}
           <div className="flex-shrink-0 text-center">
             <Link href="/" className="block">
-              <h1 className="text-lg md:text-xl font-serif tracking-[0.2em] font-semibold">
-                {siteTitle}
-              </h1>
-              <p className="text-[10px] md:text-xs tracking-[0.15em] text-gray-500 mt-0.5">
-                {tagline}
-              </p>
+              {siteIcon ? (
+                <div className="flex items-center justify-center gap-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={siteIcon}
+                    alt={siteTitle}
+                    className="h-8 w-8 md:h-10 md:w-10 object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                  <div className="text-left">
+                    <h1 className="text-lg md:text-xl font-serif tracking-[0.2em] font-semibold">
+                      {siteTitle}
+                    </h1>
+                    <p className="text-[10px] md:text-xs tracking-[0.15em] text-gray-500 mt-0.5">
+                      {tagline}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <h1 className="text-lg md:text-xl font-serif tracking-[0.2em] font-semibold">
+                    {siteTitle}
+                  </h1>
+                  <p className="text-[10px] md:text-xs tracking-[0.15em] text-gray-500 mt-0.5">
+                    {tagline}
+                  </p>
+                </>
+              )}
             </Link>
           </div>
 

@@ -52,6 +52,9 @@ export default function RichTextEditor({ initialContent = "", onChange }: RichTe
       const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
       const res = await fetch(`/api/upload?filename=${encodeURIComponent(filename)}`, {
         method: "POST",
+        headers: {
+          'x-admin-auth': 'admin-secret-token-2024',
+        },
         body: file,
       });
       if (!res.ok) throw new Error("Upload failed");
