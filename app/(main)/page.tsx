@@ -5,7 +5,7 @@ import ProductCard from '@/components/ProductCard';
 import HeroBanner from '@/components/HeroBanner';
 import Craftsmanship from '@/components/Craftsmanship';
 import Testimonials from '@/components/Testimonials';
-import { formatPrice, APP_NAME } from '@/lib/utils';
+import { serializeProducts, serializePosts, formatPrice, APP_NAME } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -13,11 +13,12 @@ export const revalidate = 0;
 async function getFeaturedProducts() {
   try {
     const { prisma } = await import('@/lib/prisma');
-    return await prisma.product.findMany({
+    const products = await prisma.product.findMany({
       where: { isActive: true },
       take: 8,
       orderBy: { createdAt: 'desc' },
     });
+    return serializeProducts(products);
   } catch (error: any) {
     console.error('DB Error (products):', error.message);
     return [];
@@ -32,7 +33,7 @@ async function getLatestPosts() {
       orderBy: { createdAt: 'desc' },
       take: 3,
     });
-    return posts;
+    return serializePosts(posts);
   } catch (error: any) {
     console.error('DB Error (posts):', error.message);
     return [];

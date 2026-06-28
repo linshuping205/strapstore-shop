@@ -1,5 +1,5 @@
 // Re-export from the unified types/index.ts for backward compatibility
-export {
+export type {
   Product,
   ProductForm,
   Post,

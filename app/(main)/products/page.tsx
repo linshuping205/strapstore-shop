@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import ProductCard from '@/components/ProductCard'
 import { Package } from 'lucide-react'
 import type { Product } from '@/types'
+import { serializeProducts } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,10 +10,11 @@ export default async function ProductsPage() {
   let products: Product[] = []
 
   try {
-    products = await prisma.product.findMany({
+    const rawProducts = await prisma.product.findMany({
       where: { isActive: true },
       orderBy: { createdAt: 'desc' }
     })
+    products = serializeProducts(rawProducts)
   } catch {
     // Database not available during build
   }

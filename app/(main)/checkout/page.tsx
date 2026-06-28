@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { useCart } from '@/components/CartProvider';
+import { useCart } from '@/lib/store';
 import { loadStripe } from '@stripe/stripe-js';
 import Link from 'next/link';
 import { ShoppingBag, CreditCard, ArrowLeft, Loader2 } from 'lucide-react';
