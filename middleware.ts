@@ -1,13 +1,14 @@
+import { verifyToken } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Check if accessing admin routes
   if (pathname.startsWith('/admin')) {
-    const user = await getCurrentUser(request);
+    const token = request.cookies.get('auth-token')?.value;
+    const user = token ? await verifyToken(token) : null;
 
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url));
