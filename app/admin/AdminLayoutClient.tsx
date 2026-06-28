@@ -46,6 +46,16 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const [settings, setSettings] = useState<Record<string, string>>({});
+  const [iconError, setIconError] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((data) => setSettings(data))
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem('admin-auth');
     setIsLoggedIn(token === ADMIN_AUTH_TOKEN);
@@ -82,6 +92,10 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
     window.location.reload();
   };
 
+  const siteIcon = settings.siteIcon || '';
+  const siteTitle = settings.siteTitle || 'MasterStrap';
+  const tagline = settings.tagline || 'Premium Watch Straps';
+
   if (checking) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -96,11 +110,20 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm p-8">
           <div className="text-center mb-8">
-            <div className="w-12 h-12 bg-gray-900 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <Shield className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-gray-900 rounded-xl flex items-center justify-center mx-auto mb-4 overflow-hidden">
+              {siteIcon && !iconError ? (
+                <img
+                  src={siteIcon}
+                  alt={siteTitle}
+                  className="w-full h-full object-cover"
+                  onError={() => setIconError(true)}
+                />
+              ) : (
+                <Shield className="w-6 h-6 text-white" />
+              )}
             </div>
             <h1 className="text-xl font-bold text-gray-900">Admin Login</h1>
-            <p className="text-sm text-gray-500 mt-1">MasterStrap Dashboard</p>
+            <p className="text-sm text-gray-500 mt-1">{siteTitle} Dashboard</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
@@ -166,9 +189,22 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
       >
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-100">
           {!collapsed && (
-            <span className="text-lg font-semibold tracking-wide text-gray-900">
-              Master<span className="text-amber-600">Admin</span>
-            </span>
+            <div className="flex items-center gap-2">
+              {siteIcon && !iconError ? (
+                <img
+                  src={siteIcon}
+                  alt={siteTitle}
+                  className="h-7 w-7 rounded object-cover"
+                  onError={() => setIconError(true)}
+                />
+              ) : (
+                <Shield className="w-5 h-5 text-amber-600" />
+              )}
+              <span className="text-lg font-semibold tracking-wide text-gray-900">
+                {siteTitle}
+                <span className="text-amber-600">Admin</span>
+              </span>
+            </div>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
