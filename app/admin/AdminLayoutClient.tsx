@@ -13,7 +13,12 @@ import {
   ChevronRight,
   LogOut,
   MessageSquare,
-  Users
+  Users,
+  Shield,
+  User,
+  Lock,
+  ArrowRight,
+  AlertCircle,
 } from 'lucide-react';
 
 const navItems = [
@@ -26,21 +31,50 @@ const navItems = [
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
+const ADMIN_PASSWORD = 'MasterStrap@2024!';
+const ADMIN_AUTH_TOKEN = 'admin-secret-token-2024';
+
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [checking, setChecking] = useState(true);
   const pathname = usePathname();
 
+  const [form, setForm] = useState({ username: '', password: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
   useEffect(() => {
-    const hasCookie = document.cookie.includes('admin-auth=');
-    setIsLoggedIn(hasCookie);
+    const token = localStorage.getItem('admin-auth');
+    setIsLoggedIn(token === ADMIN_AUTH_TOKEN);
     setChecking(false);
   }, []);
 
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!form.username.trim() || !form.password) {
+      setError('Username and password are required');
+      return;
+    }
+
+    if (form.username.trim() !== 'admin' || form.password !== ADMIN_PASSWORD) {
+      setError('Invalid username or password');
+      return;
+    }
+
+    setLoading(true);
+    setTimeout(() => {
+      localStorage.setItem('admin-auth', ADMIN_AUTH_TOKEN);
+      setIsLoggedIn(true);
+      setLoading(false);
+    }, 500);
+  };
+
   const handleLogout = () => {
-    document.cookie = 'admin-auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    window.location.href = '/admin';
+    localStorage.removeItem('admin-auth');
+    window.location.reload();
   };
 
   if (checking) {
@@ -51,11 +85,66 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
     );
   }
 
-  // Not logged in: render content without sidebar
+  // Not logged in: show login form
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
-        <main className="min-h-screen">{children}</main>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm p-8">
+          <div className="text-center mb-8">
+            <div className="w-12 h-12 bg-gray-900 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <Shield className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-xl font-bold text-gray-900">Admin Login</h1>
+            <p className="text-sm text-gray-500 mt-1">MasterStrap Dashboard</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            {error && (
+              <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                {error}
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  value={form.username}
+                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-300 transition-all"
+                  placeholder="admin"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="password"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-300 transition-all"
+                  placeholder="••••••"
+                />
+              </div>
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gray-900 text-white py-2.5 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? 'Signing in...' : 'Sign In'}
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </form>
+
+          <p className="mt-4 text-center text-xs text-gray-400">
+            Default: admin / MasterStrap@2024!
+          </p>
+        </div>
       </div>
     );
   }
