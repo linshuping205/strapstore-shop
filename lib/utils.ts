@@ -104,6 +104,7 @@ export function serializeProduct(product: any): Product {
     ...product,
     price: typeof product.price === 'object' && product.price !== null ? product.price.toNumber() : Number(product.price),
     comparePrice: product.comparePrice ? (typeof product.comparePrice === 'object' ? product.comparePrice.toNumber() : Number(product.comparePrice)) : null,
+    images: product.images || [],
     createdAt: product.createdAt instanceof Date ? product.createdAt.toISOString() : product.createdAt,
     updatedAt: product.updatedAt instanceof Date ? product.updatedAt.toISOString() : product.updatedAt,
   };

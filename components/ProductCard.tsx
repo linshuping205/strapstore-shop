@@ -13,7 +13,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       <Link href={`/products/${product.slug}/`}>
         <div className="aspect-square bg-gray-50 rounded-xl overflow-hidden mb-4 relative">
           <Image
-            src={product.images[0] || '/images/placeholder.jpg'}
+            src={product.images?.[0] || '/images/placeholder.jpg'}
             alt={product.name}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"
