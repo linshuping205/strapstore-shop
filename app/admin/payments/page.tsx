@@ -53,10 +53,18 @@ interface PaymentStats {
   totalRevenue: number;
   pendingRevenue: number;
   cancelledRevenue: number;
+  availableBalance: number;
+  withdrawnTotal: number;
   totalOrders: number;
   paidCount: number;
   pendingCount: number;
   cancelledCount: number;
+}
+
+interface WithdrawalRecord {
+  date: string;
+  amount: number;
+  note: string;
 }
 
 const statusConfig: Record<string, { color: string; icon: React.ElementType; label: string }> = {
@@ -71,12 +79,20 @@ export default function PaymentsPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<PaymentOrder[]>([]);
   const [stats, setStats] = useState<PaymentStats | null>(null);
+  const [withdrawalHistory, setWithdrawalHistory] = useState<WithdrawalRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<string>('All');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+
+  // Withdrawal modal
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawNote, setWithdrawNote] = useState('');
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
+  const [withdrawError, setWithdrawError] = useState('');
 
   const fetchPayments = useCallback(async () => {
     setLoading(true);
@@ -94,6 +110,7 @@ export default function PaymentsPage() {
       if (data.success) {
         setOrders(data.data || []);
         setStats(data.stats || null);
+        setWithdrawalHistory(data.withdrawalHistory || []);
       } else {
         setError(data.error || 'Failed to load payments');
       }
@@ -136,6 +153,46 @@ export default function PaymentsPage() {
       console.error('Update error:', e);
     } finally {
       setUpdating(null);
+    }
+  };
+
+  const handleWithdraw = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setWithdrawError('');
+    const amount = parseFloat(withdrawAmount);
+    if (isNaN(amount) || amount <= 0) {
+      setWithdrawError('Please enter a valid amount');
+      return;
+    }
+    if (stats && amount > stats.availableBalance) {
+      setWithdrawError('Amount exceeds available balance');
+      return;
+    }
+
+    setWithdrawLoading(true);
+    try {
+      const token = localStorage.getItem('admin-auth');
+      const res = await fetch('/api/admin/payments', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-auth': token || '',
+        },
+        body: JSON.stringify({ amount, note: withdrawNote }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setShowWithdrawModal(false);
+        setWithdrawAmount('');
+        setWithdrawNote('');
+        fetchPayments();
+      } else {
+        setWithdrawError(data.error || 'Withdrawal failed');
+      }
+    } catch (e) {
+      setWithdrawError('Network error');
+    } finally {
+      setWithdrawLoading(false);
     }
   };
 
@@ -183,15 +240,37 @@ export default function PaymentsPage() {
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
           <div className="bg-white rounded-xl border border-gray-100 p-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
                 <DollarSign className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">${formatPrice(stats.totalRevenue)}</p>
+                <p className="text-xl font-bold text-gray-900">${formatPrice(stats.totalRevenue)}</p>
                 <p className="text-sm text-gray-500">Total Revenue</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-xl font-bold text-gray-900">${formatPrice(stats.availableBalance)}</p>
+                <p className="text-sm text-gray-500">Available</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-gray-600" />
+              </div>
+              <div>
+                <p className="text-xl font-bold text-gray-900">${formatPrice(stats.withdrawnTotal)}</p>
+                <p className="text-sm text-gray-500">Withdrawn</p>
               </div>
             </div>
           </div>
@@ -201,8 +280,8 @@ export default function PaymentsPage() {
                 <Clock className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">${formatPrice(stats.pendingRevenue)}</p>
-                <p className="text-sm text-gray-500">Pending Collection</p>
+                <p className="text-xl font-bold text-gray-900">${formatPrice(stats.pendingRevenue)}</p>
+                <p className="text-sm text-gray-500">Pending</p>
               </div>
             </div>
           </div>
@@ -212,8 +291,8 @@ export default function PaymentsPage() {
                 <XCircle className="w-5 h-5 text-red-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">${formatPrice(stats.cancelledRevenue)}</p>
-                <p className="text-sm text-gray-500">Cancelled / Lost</p>
+                <p className="text-xl font-bold text-gray-900">${formatPrice(stats.cancelledRevenue)}</p>
+                <p className="text-sm text-gray-500">Cancelled</p>
               </div>
             </div>
           </div>
@@ -223,10 +302,131 @@ export default function PaymentsPage() {
                 <CheckCircle className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.paidCount}</p>
+                <p className="text-xl font-bold text-gray-900">{stats.paidCount}</p>
                 <p className="text-sm text-gray-500">Paid Orders</p>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Withdrawal action bar */}
+      {stats && stats.availableBalance > 0 && (
+        <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-emerald-900">Available for withdrawal</p>
+              <p className="text-sm text-emerald-700">${formatPrice(stats.availableBalance)} ready to transfer</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowWithdrawModal(true)}
+            className="px-5 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors text-sm"
+          >
+            Withdraw
+          </button>
+        </div>
+      )}
+
+      {/* Withdrawal Modal */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-1">Withdraw Funds</h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Available balance: ${stats ? formatPrice(stats.availableBalance) : '0.00'}
+            </p>
+            <form onSubmit={handleWithdraw} className="space-y-4">
+              {withdrawError && (
+                <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg">{withdrawError}</div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    max={stats?.availableBalance}
+                    required
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    className="w-full pl-8 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Note (optional)</label>
+                <input
+                  type="text"
+                  value={withdrawNote}
+                  onChange={(e) => setWithdrawNote(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="Bank transfer, PayPal, etc."
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowWithdrawModal(false); setWithdrawError(''); setWithdrawAmount(''); setWithdrawNote(''); }}
+                  className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={withdrawLoading}
+                  className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                >
+                  {withdrawLoading ? 'Processing...' : 'Confirm Withdraw'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Withdrawal History */}
+      {withdrawalHistory.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden mb-6">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 className="font-semibold text-gray-900">Withdrawal History</h3>
+            <span className="text-sm text-gray-500">{withdrawalHistory.length} record(s)</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="text-left px-5 py-3 font-medium text-gray-600">Date</th>
+                  <th className="text-right px-5 py-3 font-medium text-gray-600">Amount</th>
+                  <th className="text-left px-5 py-3 font-medium text-gray-600">Note</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {withdrawalHistory.map((w, i) => (
+                  <tr key={i} className="hover:bg-gray-50">
+                    <td className="px-5 py-3 text-gray-700">
+                      {new Date(w.date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </td>
+                    <td className="px-5 py-3 text-right font-semibold text-emerald-700">
+                      ${formatPrice(w.amount)}
+                    </td>
+                    <td className="px-5 py-3 text-gray-500">{w.note || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

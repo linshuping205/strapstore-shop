@@ -50,6 +50,23 @@ export async function GET(request: NextRequest) {
       .filter((o) => o.status === 'CANCELLED')
       .reduce((sum, o) => sum + Number(o.total), 0);
 
+    // Load withdrawal data from settings
+    let withdrawnTotal = 0;
+    let withdrawalHistory: { date: string; amount: number; note: string }[] = [];
+    try {
+      const withdrawnSetting = await prisma.settings.findUnique({ where: { key: 'withdrawn_total' } });
+      if (withdrawnSetting) withdrawnTotal = parseFloat(withdrawnSetting.value) || 0;
+
+      const historySetting = await prisma.settings.findUnique({ where: { key: 'withdrawal_history' } });
+      if (historySetting) {
+        try {
+          withdrawalHistory = JSON.parse(historySetting.value) || [];
+        } catch { /* ignore */ }
+      }
+    } catch { /* settings may not have these keys */ }
+
+    const availableBalance = Math.max(0, totalRevenue - withdrawnTotal);
+
     return NextResponse.json({
       success: true,
       data: orders.map((o) => ({
@@ -62,11 +79,14 @@ export async function GET(request: NextRequest) {
         totalRevenue,
         pendingRevenue,
         cancelledRevenue,
+        availableBalance,
+        withdrawnTotal,
         totalOrders: orders.length,
         paidCount: orders.filter((o) => o.status === 'PAID').length,
         pendingCount: orders.filter((o) => o.status === 'PENDING').length,
         cancelledCount: orders.filter((o) => o.status === 'CANCELLED').length,
       },
+      withdrawalHistory,
     });
   } catch (error: any) {
     console.error('Admin payments GET error:', error?.message || error);
@@ -97,5 +117,72 @@ export async function PATCH(request: NextRequest) {
   } catch (error: any) {
     console.error('Admin payments PATCH error:', error?.message || error);
     return NextResponse.json({ success: false, error: 'Failed to update payment status' }, { status: 500 });
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get('x-admin-auth');
+    if (authHeader !== ADMIN_TOKEN) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { amount, note } = body;
+
+    if (!amount || typeof amount !== 'number' || amount <= 0) {
+      return NextResponse.json({ success: false, error: 'Valid amount is required' }, { status: 400 });
+    }
+
+    // Get current withdrawn total
+    let withdrawnTotal = 0;
+    let history: { date: string; amount: number; note: string }[] = [];
+
+    try {
+      const withdrawnSetting = await prisma.settings.findUnique({ where: { key: 'withdrawn_total' } });
+      if (withdrawnSetting) withdrawnTotal = parseFloat(withdrawnSetting.value) || 0;
+
+      const historySetting = await prisma.settings.findUnique({ where: { key: 'withdrawal_history' } });
+      if (historySetting) {
+        try { history = JSON.parse(historySetting.value) || []; } catch { /* ignore */ }
+      }
+    } catch { /* ignore */ }
+
+    // Calculate available balance (need orders again to validate)
+    const orders = await prisma.order.findMany({
+      where: { status: { in: ['PAID', 'SHIPPED', 'DELIVERED'] } },
+    });
+    const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total), 0);
+    const availableBalance = Math.max(0, totalRevenue - withdrawnTotal);
+
+    if (amount > availableBalance) {
+      return NextResponse.json({ success: false, error: 'Insufficient balance' }, { status: 400 });
+    }
+
+    const newWithdrawnTotal = withdrawnTotal + amount;
+    const newRecord = { date: new Date().toISOString(), amount, note: note || '' };
+    history.unshift(newRecord);
+    // Keep only last 50 records
+    if (history.length > 50) history = history.slice(0, 50);
+
+    // Upsert settings
+    await prisma.settings.upsert({
+      where: { key: 'withdrawn_total' },
+      update: { value: String(newWithdrawnTotal) },
+      create: { key: 'withdrawn_total', value: String(newWithdrawnTotal) },
+    });
+    await prisma.settings.upsert({
+      where: { key: 'withdrawal_history' },
+      update: { value: JSON.stringify(history) },
+      create: { key: 'withdrawal_history', value: JSON.stringify(history) },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: { withdrawnTotal: newWithdrawnTotal, availableBalance: totalRevenue - newWithdrawnTotal, record: newRecord },
+    });
+  } catch (error: any) {
+    console.error('Admin payments PUT error:', error?.message || error);
+    return NextResponse.json({ success: false, error: 'Failed to process withdrawal' }, { status: 500 });
   }
 }
