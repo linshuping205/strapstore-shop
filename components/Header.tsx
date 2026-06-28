@@ -52,13 +52,6 @@ export default function Header() {
 
   const siteTitle = settings.siteTitle || 'MASTER STRAP';
   const tagline = settings.tagline || 'EST. 2024';
-  const [siteIcon, setSiteIcon] = useState(settings.siteIcon || '');
-  const [iconError, setIconError] = useState(false);
-
-  useEffect(() => {
-    setSiteIcon(settings.siteIcon || '');
-    setIconError(false);
-  }, [settings.siteIcon]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
@@ -81,46 +74,16 @@ export default function Header() {
           {/* 中间：Logo */}
           <div className="flex-shrink-0 text-center">
             <Link href="/" className="block">
-              {siteIcon && !iconError ? (
-                <div className="flex items-center justify-center gap-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={siteIcon}
-                    alt={siteTitle}
-                    className="h-8 w-8 md:h-10 md:w-10 object-contain"
-                    onError={() => setIconError(true)}
-                  />
-                  <div className="text-left">
-                    <h1 className="text-lg md:text-xl font-serif tracking-[0.2em] font-semibold">
-                      {siteTitle}
-                    </h1>
-                    <p className="text-[10px] md:text-xs tracking-[0.15em] text-gray-500 mt-0.5">
-                      {tagline}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center gap-2">
-                  {siteIcon && iconError && (
-                    <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-gray-900 text-white flex items-center justify-center text-sm font-bold">
-                      {siteTitle.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="text-left">
-                    <h1 className="text-lg md:text-xl font-serif tracking-[0.2em] font-semibold">
-                      {siteTitle}
-                    </h1>
-                    <p className="text-[10px] md:text-xs tracking-[0.15em] text-gray-500 mt-0.5">
-                      {tagline}
-                    </p>
-                  </div>
-                </div>
-              )}
+              <h1 className="text-lg md:text-xl font-serif tracking-[0.2em] font-semibold">
+                {siteTitle}
+              </h1>
+              <p className="text-[10px] md:text-xs tracking-[0.15em] text-gray-500 mt-0.5">
+                {tagline}
+              </p>
             </Link>
           </div>
-
-          {/* 右侧：图标组 */}
-          <div className="flex items-center justify-end gap-2 md:gap-3 flex-1">
+                    </p>
+                  <div className="flex items-center justify-end gap-2 md:gap-3 flex-1">
 
             {/* Heart - 收藏 */}
             <button className="hover:text-gray-600 transition" aria-label="Wishlist">
