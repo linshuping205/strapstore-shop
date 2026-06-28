@@ -5,8 +5,8 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith('/admin')) {
-    // Allow /admin to handle login itself
-    if (pathname === '/admin') {
+    // Allow /admin and /admin/ (with trailing slash) to handle login
+    if (pathname === '/admin' || pathname === '/admin/') {
       return NextResponse.next();
     }
 
@@ -14,7 +14,7 @@ export async function middleware(request: NextRequest) {
     const validToken = process.env.ADMIN_AUTH_TOKEN || 'admin-secret-token';
 
     if (adminAuth !== validToken) {
-      return NextResponse.redirect(new URL('/admin', request.url));
+      return NextResponse.redirect(new URL('/admin/', request.url));
     }
   }
 
