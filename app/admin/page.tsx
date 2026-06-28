@@ -92,13 +92,15 @@ export default function AdminPage() {
 
     setLoading(true);
     try {
+      const username = (document.getElementById('admin-username') as HTMLInputElement)?.value || '';
+      const password = (document.getElementById('admin-password') as HTMLInputElement)?.value || '';
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          username: form.username.trim(),
-          password: form.password,
+          username: username.trim(),
+          password: password,
         }),
       });
       const data = await res.json();
@@ -149,10 +151,10 @@ export default function AdminPage() {
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
-                  value={form.username}
-                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                  defaultValue="admin"
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-300 transition-all"
                   placeholder="admin"
+                  id="admin-username"
                 />
               </div>
             </div>
@@ -162,10 +164,10 @@ export default function AdminPage() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="password"
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  defaultValue=""
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-300 transition-all"
                   placeholder="••••••"
+                  id="admin-password"
                 />
               </div>
             </div>
