@@ -13,7 +13,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
     }
 
-    const response = NextResponse.json({ success: true });
+    const response = new NextResponse(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
     response.cookies.set('admin-auth', ADMIN_AUTH_TOKEN, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
