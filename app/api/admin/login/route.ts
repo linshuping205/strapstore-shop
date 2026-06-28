@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const runtime = 'nodejs';
+
 const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = 'MasterStrap@2024!';
 const ADMIN_AUTH_TOKEN = 'admin-secret-token-2024';
