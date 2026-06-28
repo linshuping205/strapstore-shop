@@ -3,12 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Save, Upload, Globe, Mail, Type, Tag, ImageIcon, Loader2, CheckCircle } from 'lucide-react';
 
-interface SettingsForm {
-  siteTitle: string;
-  tagline: string;
-  adminEmail: string;
-  siteIcon: string;
-}
+import { SiteSettings } from '@/types';
 
 const DEFAULT_SETTINGS: SettingsForm = {
   siteTitle: 'Master Strap',
@@ -18,7 +13,7 @@ const DEFAULT_SETTINGS: SettingsForm = {
 };
 
 export default function SettingsPage() {
-  const [form, setForm] = useState<SettingsForm>(DEFAULT_SETTINGS);
+  const [form, setForm] = useState<SiteSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);

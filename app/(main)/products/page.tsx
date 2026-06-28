@@ -5,7 +5,7 @@ import { Package } from 'lucide-react'
 export const dynamic = 'force-dynamic'
 
 export default async function ProductsPage() {
-  let products: any[] = []
+  let products: Product[] = []
 
   try {
     products = await prisma.product.findMany({

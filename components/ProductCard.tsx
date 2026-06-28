@@ -1,21 +1,13 @@
+import { Product } from '@/types';
 import Link from 'next/link';
 import Image from 'next/image';
+import { formatPrice } from '@/lib/utils';
 
-interface Product {
-  id: string;
-  slug: string;
-  name: string;
-  price: any;
-  comparePrice: any;
-  images: string[];
-  category: string;
+export interface ProductCardProps {
+  product: Product;
 }
 
-function formatPrice(price: any): string {
-  return Number(price).toFixed(2);
-}
-
-export default function ProductCard({ product }: { product: Product }) {
+export default function ProductCard({ product }: ProductCardProps) {
   return (
     <div className="group">
       <Link href={`/products/${product.slug}/`}>
@@ -35,7 +27,7 @@ export default function ProductCard({ product }: { product: Product }) {
           </h3>
           <div className="flex items-center gap-2">
             <span className="font-semibold">${formatPrice(product.price)}</span>
-            {product.comparePrice && (
+            {product.comparePrice && product.comparePrice > product.price && (
               <span className="text-sm text-gray-400 line-through">
                 ${formatPrice(product.comparePrice)}
               </span>

@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Package, FileText, ShoppingCart, TrendingUp, Heart, Eye, MessageCircle } from 'lucide-react';
+import { Order, Post } from '@/types';
+import { formatPrice } from '@/lib/utils';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState([
@@ -13,7 +15,7 @@ export default function DashboardPage() {
     { label: 'Total Views', value: '0', icon: Eye, change: '' },
     { label: 'Total Comments', value: '0', icon: MessageCircle, change: '' },
   ]);
-  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,9 +28,9 @@ export default function DashboardPage() {
         ]);
 
         const posts = Array.isArray(postsRes) ? postsRes : [];
-        const totalLikes = posts.reduce((sum: number, p: any) => sum + (p.likes || 0), 0);
-        const totalViews = posts.reduce((sum: number, p: any) => sum + (p.views || 0), 0);
-        const totalComments = posts.reduce((sum: number, p: any) => sum + (p._count?.comments || 0), 0);
+        const totalLikes = posts.reduce((sum: number, p: Post) => sum + (p.likes || 0), 0);
+        const totalViews = posts.reduce((sum: number, p: Post) => sum + (p.views || 0), 0);
+        const totalComments = posts.reduce((sum: number, p: Post) => sum + (p._count?.comments || 0), 0);
 
         const orders = Array.isArray(ordersRes) ? ordersRes : [];
         setRecentOrders(orders.slice(0, 5));
@@ -92,7 +94,7 @@ export default function DashboardPage() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Orders</h3>
           <div className="space-y-3">
             {recentOrders.length > 0 ? (
-              recentOrders.map((order: any) => (
+              recentOrders.map((order: Order) => (
                 <div key={order.id} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
                   <div>
                     <p className="text-sm font-medium text-gray-900">#{order.id.slice(-6)}</p>

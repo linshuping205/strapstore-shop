@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Search, Plus, Pencil, Trash2, Eye, RefreshCw, FileText } from 'lucide-react';
-import type { Post } from '@/types/blog';
+import type { Post } from '@/types';
 import { formatDateShort } from '@/lib/utils';
 
 export default function BlogsPage() {

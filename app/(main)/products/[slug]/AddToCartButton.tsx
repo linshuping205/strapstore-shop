@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { useCart } from '@/components/CartProvider'
+import { useCart } from '@/lib/store'
 import { ShoppingCart, Check, Package } from 'lucide-react'
+import { Product } from '@/types'
 
-export default function AddToCartButton({ product, disabled }: { product: any; disabled?: boolean }) {
+export default function AddToCartButton({ product, disabled }: { product: Product; disabled?: boolean }) {
   const [added, setAdded] = useState(false)
   const [quantity, setQuantity] = useState(1)
   const addItem = useCart((state) => state.addItem)

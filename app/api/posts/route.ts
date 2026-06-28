@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { errorResponse, successResponse } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,8 +15,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    // Build where clause using Prisma ORM (no SQL injection risk)
-    const where: any = { published: true };
+    const where: Record<string, unknown> = { published: true };
 
     if (search) {
       where.OR = [
@@ -54,8 +54,7 @@ export async function GET(request: NextRequest) {
       prisma.post.count({ where }),
     ]);
 
-    return NextResponse.json({
-      success: true,
+    return successResponse({
       data: posts,
       pagination: {
         page,
@@ -66,6 +65,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Posts GET error:', error);
-    return NextResponse.json({ error: 'Database error' }, { status: 500 });
+    return errorResponse('Database error');
   }
 }

@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const productId = searchParams.get('productId');
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (status) where.status = status;
     if (productId) where.productId = productId;
 

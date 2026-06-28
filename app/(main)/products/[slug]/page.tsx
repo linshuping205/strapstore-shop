@@ -31,11 +31,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
     }),
   ]);
 
-  const formatPrice = (price: any) => {
-    const num = Number(price);
-    return isNaN(num) ? '0.00' : num.toFixed(2);
-  };
-
   const hasComparePrice = product.comparePrice && Number(product.comparePrice) > Number(product.price);
   const discount = hasComparePrice
     ? Math.round((1 - Number(product.price) / Number(product.comparePrice)) * 100)

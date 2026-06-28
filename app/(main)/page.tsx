@@ -1,9 +1,11 @@
+import { Product, Post } from '@/types';
 import Link from 'next/link';
 import Image from 'next/image';
 import ProductCard from '@/components/ProductCard';
 import HeroBanner from '@/components/HeroBanner';
 import Craftsmanship from '@/components/Craftsmanship';
 import Testimonials from '@/components/Testimonials';
+import { formatPrice } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -38,8 +40,8 @@ async function getLatestPosts() {
 }
 
 export default async function HomePage() {
-  let products: any[] = [];
-  let posts: any[] = [];
+  let products: Product[] = [];
+  let posts: Post[] = [];
 
   try {
     [products, posts] = await Promise.all([
@@ -53,7 +55,7 @@ export default async function HomePage() {
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'MasterStrap',
+    name: APP_NAME,
     url: process.env.NEXT_PUBLIC_APP_URL,
     potentialAction: {
       '@type': 'SearchAction',

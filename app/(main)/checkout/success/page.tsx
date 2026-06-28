@@ -6,11 +6,8 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, ShoppingBag, ArrowRight, Mail } from 'lucide-react';
 
-interface Order {
-  id: string;
-  total: number;
-  email: string;
-}
+import { Order } from '@/types';
+
 
 function SuccessContent() {
   const searchParams = useSearchParams();

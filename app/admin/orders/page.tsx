@@ -3,33 +3,10 @@
 import { useState, useEffect } from 'react';
 import { Search, Eye, Package, Truck, CheckCircle, Loader2, RefreshCw, XCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { formatPrice } from '@/lib/utils';
+import type { Order } from '@/types';
 
-interface OrderItem {
-  id: string;
-  name: string;
-  quantity: number;
-  price: number;
-  image: string;
-}
-
-interface Order {
-  id: string;
-  name: string;
-  email: string;
-  total: number;
-  status: string;
-  createdAt: string;
-  items: {
-    id: string;
-    quantity: number;
-    price: number;
-    product: {
-      id: string;
-      name: string;
-      images: string[];
-    };
-  }[];
-}
+import type { Order } from '@/types';
 
 const statusConfig: Record<string, { color: string; icon: LucideIcon; label: string }> = {
   PENDING: { color: 'bg-amber-50 text-amber-600', icon: Package, label: 'Pending' },
@@ -113,7 +90,7 @@ export default function OrdersPage() {
       year: 'numeric',
     });
 
-  const formatPrice = (price: any) => {
+  const formatPrice = (price: number | string | null | undefined): string => {
     const num = Number(price);
     return isNaN(num) ? '0.00' : num.toFixed(2);
   };

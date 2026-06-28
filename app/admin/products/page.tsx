@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Search, Plus, Pencil, Trash2, Eye, RefreshCw, Package } from 'lucide-react';
-import type { Product } from '@/types/blog';
+import type { Product } from '@/types';
+import { formatPrice } from '@/lib/utils';
+
+import { Product } from '@/types';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -121,10 +124,6 @@ export default function ProductsPage() {
     }
   };
 
-  const formatPrice = (price: any) => {
-    const num = Number(price);
-    return isNaN(num) ? '0.00' : num.toFixed(2);
-  };
 
   return (
     <div>

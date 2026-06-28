@@ -30,7 +30,7 @@ export async function PUT(
   try {
     const body = await request.json();
 
-    const data: any = {};
+    const data: Record<string, unknown> = {};
     if (body.title !== undefined) data.title = body.title;
     if (body.slug !== undefined) data.slug = body.slug;
     if (body.content !== undefined) data.content = body.content;

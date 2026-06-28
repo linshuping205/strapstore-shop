@@ -61,6 +61,32 @@ export function getClientIp(request: Request): string {
   );
 }
 
+export function formatPrice(price: number | string | null | undefined): string {
+  const num = Number(price ?? 0);
+  return isNaN(num) ? '0.00' : num.toFixed(2);
+}
+
+export function formatPriceHTML(price: number | string | null | undefined): string {
+  const num = Number(price ?? 0);
+  return isNaN(num) ? '0.00' : num.toFixed(2);
+}
+
+export function stripHtml(html: string): string {
+  if (!html) return '';
+  return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+}
+
+export const APP_NAME = 'MasterStrap';
+export const APP_TAGLINE = 'Premium Watch Straps & Bands';
+export const DEFAULT_EMAIL = 'hello@masterstrap.com';
+export const DEFAULT_ADDRESS = 'Florence, Italy';
+export const DEFAULT_INSTAGRAM = 'https://instagram.com';
+export const DEFAULT_PINTEREST = 'https://pinterest.com';
+export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+export const ALLOWED_SHIPPING_COUNTRIES = ['US', 'CA', 'GB', 'DE', 'FR', 'AU'] as const;
+export const STATUS_FLOW = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED'] as const;
+
 export function hashIp(ip: string): string {
   let hash = 0;
   for (let i = 0; i < ip.length; i++) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { errorResponse, successResponse, handlePrismaError } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +11,7 @@ export async function GET() {
     });
     return NextResponse.json(products);
   } catch {
-    return NextResponse.json({ error: 'Database error' }, { status: 500 });
+    return errorResponse('Database error');
   }
 }
 
@@ -18,20 +19,19 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // Input validation
     if (!body.name || typeof body.name !== 'string' || body.name.trim().length < 1) {
-      return NextResponse.json({ error: 'Product name is required' }, { status: 400 });
+      return errorResponse('Product name is required', 400);
     }
     if (!body.slug || typeof body.slug !== 'string' || body.slug.trim().length < 1) {
-      return NextResponse.json({ error: 'Slug is required' }, { status: 400 });
+      return errorResponse('Slug is required', 400);
     }
     const price = parseFloat(body.price);
     if (isNaN(price) || price <= 0) {
-      return NextResponse.json({ error: 'Valid price is required' }, { status: 400 });
+      return errorResponse('Valid price is required', 400);
     }
     const stock = parseInt(body.stock);
     if (isNaN(stock) || stock < 0) {
-      return NextResponse.json({ error: 'Valid stock is required' }, { status: 400 });
+      return errorResponse('Valid stock is required', 400);
     }
 
     const images = Array.isArray(body.images)
@@ -58,9 +58,9 @@ export async function POST(request: NextRequest) {
     };
 
     const product = await prisma.product.create({ data });
-    return NextResponse.json(product, { status: 201 });
+    return successResponse(product, 201);
   } catch (error) {
     console.error('Create product error:', error);
-    return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
+    return handlePrismaError(error);
   }
 }

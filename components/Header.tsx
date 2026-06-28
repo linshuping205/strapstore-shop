@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useCart } from "@/components/CartProvider";
+import { useCart } from "@/lib/store";
 
 interface SiteSettings {
   siteTitle?: string;
