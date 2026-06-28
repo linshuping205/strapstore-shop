@@ -85,7 +85,7 @@ export default function AdminPage() {
     e.preventDefault();
     setError('');
 
-    if (!form.username.trim() || !form.password) {
+    if (!(document.getElementById('admin-username') as HTMLInputElement)?.value.trim() || !(document.getElementById('admin-password') as HTMLInputElement)?.value) {
       setError('Username and password are required');
       return;
     }
