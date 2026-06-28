@@ -1,18 +1,9 @@
-import { SignJWT, jwtVerify } from 'jose';
+import { createToken, verifyToken, type JWTPayload } from '@/lib/jwt';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-in-production'
-);
-
-export interface JWTPayload {
-  userId: string;
-  email: string;
-  role: string;
-  name: string;
-}
+export type { JWTPayload };
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
@@ -20,25 +11,6 @@ export async function hashPassword(password: string): Promise<string> {
 
 export async function verifyPassword(password: string, hashed: string): Promise<boolean> {
   return bcrypt.compare(password, hashed);
-}
-
-export async function createToken(payload: JWTPayload): Promise<string> {
-  return new SignJWT(payload)
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('7d')
-    .sign(JWT_SECRET);
-}
-
-export async function verifyToken(token: string): Promise<JWTPayload | null> {
-  try {
-    const { payload } = await jwtVerify(token, JWT_SECRET, {
-      clockTolerance: 60,
-    });
-    return payload as unknown as JWTPayload;
-  } catch {
-    return null;
-  }
 }
 
 export async function getCurrentUser(req?: NextRequest): Promise<JWTPayload | null> {
