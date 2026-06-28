@@ -1,7 +1,7 @@
-import { createToken, verifyToken, type JWTPayload } from '@/lib/jwt';
+import { createToken, verifyToken } from '@/lib/jwt';
+import type { JWTPayload } from '@/lib/jwt';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
-import { NextRequest } from 'next/server';
 
 export type { JWTPayload };
 
@@ -13,7 +13,7 @@ export async function verifyPassword(password: string, hashed: string): Promise<
   return bcrypt.compare(password, hashed);
 }
 
-export async function getCurrentUser(req?: NextRequest): Promise<JWTPayload | null> {
+export async function getCurrentUser(req?: { cookies: { get: (name: string) => { value: string } | undefined } }): Promise<JWTPayload | null> {
   try {
     let token: string | undefined;
     
@@ -37,7 +37,7 @@ export async function setAuthCookie(token: string): Promise<void> {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge: 60 * 60 * 24 * 7,
     path: '/',
   });
 }
