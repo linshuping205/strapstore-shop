@@ -95,6 +95,7 @@ export default function AdminPage() {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           username: form.username.trim(),
           password: form.password,
