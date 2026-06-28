@@ -98,6 +98,12 @@ export default function SettingsPage() {
     }
   };
 
+  const [iconPreviewError, setIconPreviewError] = useState(false);
+
+  useEffect(() => {
+    setIconPreviewError(false);
+  }, [form.siteIcon]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -142,7 +148,7 @@ export default function SettingsPage() {
             This icon appears in the browser tab and bookmarks. Recommended size: 32x32 or 64x64 pixels.
           </p>
           <div className="flex items-center gap-4">
-            {form.siteIcon ? (
+            {form.siteIcon && !iconPreviewError ? (
               <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
                 <Image
                   src={form.siteIcon}
@@ -150,9 +156,7 @@ export default function SettingsPage() {
                   width={64}
                   height={64}
                   className="w-full h-full object-cover"
-                  onError={() => {
-                    // 如果加载失败，显示占位符
-                  }}
+                  onError={() => setIconPreviewError(true)}
                 />
               </div>
             ) : (
