@@ -1,36 +1,22 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-function decodeJWT(token: string): { userId: string; email: string; role: string; name: string } | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = JSON.parse(atob(parts[1]));
-    if (!payload.userId || !payload.role) return null;
-    return payload;
-  } catch {
-    return null;
-  }
-}
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Only protect admin routes
   if (pathname.startsWith('/admin')) {
-    // Allow setup page without authentication
-    if (pathname === '/admin/setup') {
+    // Allow login page
+    if (pathname === '/admin/login') {
       return NextResponse.next();
     }
 
-    const token = request.cookies.get('auth-token')?.value;
-    const user = token ? decodeJWT(token) : null;
+    // Check for admin auth cookie
+    const adminAuth = request.cookies.get('admin-auth')?.value;
+    const validToken = process.env.ADMIN_AUTH_TOKEN || 'admin-secret-token';
 
-    if (!user) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
-
-    if (user.role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/', request.url));
+    if (adminAuth !== validToken) {
+      return NextResponse.redirect(new URL('/admin/login', request.url));
     }
   }
 

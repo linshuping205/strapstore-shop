@@ -32,8 +32,9 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   const router = useRouter();
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/login');
+    document.cookie = 'admin-auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    router.push('/admin/login');
+    router.refresh();
   };
 
   return (
