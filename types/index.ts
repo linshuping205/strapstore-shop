@@ -151,7 +151,21 @@ export interface CartStore {
   itemCount: () => number;
 }
 
-export interface SiteSettings {
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: 'USER' | 'ADMIN';
+  avatar: string | null;
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  country: string | null;
+  postalCode: string | null;
+  bio: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
   siteTitle?: string;
   tagline?: string;
   siteIcon?: string;

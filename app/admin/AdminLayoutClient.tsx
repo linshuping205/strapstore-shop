@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Package,
@@ -12,7 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  MessageSquare
+  MessageSquare,
+  Users
 } from 'lucide-react';
 
 const navItems = [
@@ -21,12 +22,19 @@ const navItems = [
   { href: '/admin/blogs', label: 'Blogs', icon: FileText },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/admin/reviews', label: 'Reviews', icon: MessageSquare },
+  { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/login');
+  };
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans text-gray-800">
@@ -72,7 +80,10 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
         </nav>
 
         <div className="p-4 border-t border-gray-100">
-          <button className={`flex items-center text-sm text-gray-500 hover:text-red-600 transition-colors ${collapsed ? 'justify-center w-full' : ''}`}>
+          <button
+            onClick={handleLogout}
+            className={`flex items-center text-sm text-gray-500 hover:text-red-600 transition-colors ${collapsed ? 'justify-center w-full' : ''}`}
+          >
             <LogOut size={20} className={collapsed ? '' : 'mr-3'} />
             {!collapsed && <span>Logout</span>}
           </button>
