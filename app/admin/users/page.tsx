@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Users, Search, Shield, User, Trash2, ChevronLeft, ChevronRight, ArrowLeft, AlertTriangle, X } from 'lucide-react';
+import { Users, Search, ChevronLeft, ChevronRight, ArrowLeft, AlertTriangle, Trash2, User } from 'lucide-react';
 
 interface UserItem {
   id: string;
@@ -180,7 +181,7 @@ export default function AdminUsersPage() {
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
                             {user.avatar ? (
-                              <img src={user.avatar} alt="" className="w-10 h-10 rounded-full object-cover" />
+                              <Image src={user.avatar} alt="" width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
                             ) : (
                               <User className="w-5 h-5" />
                             )}

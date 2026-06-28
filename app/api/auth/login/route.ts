@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyPassword, createToken, setAuthCookie } from '@/lib/auth';
 import { errorResponse, successResponse } from '@/lib/api';
