@@ -13,16 +13,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
     }
 
+    const maxAge = 60 * 60 * 24 * 7; // 7 days
+    const cookieValue = `admin-auth=${ADMIN_AUTH_TOKEN}; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}; Path=/`;
+
     const response = new NextResponse(JSON.stringify({ success: true }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-    response.cookies.set('admin-auth', ADMIN_AUTH_TOKEN, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/',
+      headers: {
+        'Content-Type': 'application/json',
+        'Set-Cookie': cookieValue,
+      },
     });
 
     return response;
