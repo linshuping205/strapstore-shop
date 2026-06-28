@@ -54,12 +54,15 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
     e.preventDefault();
     setError('');
 
-    if (!form.username.trim() || !form.password) {
+    const username = (document.querySelector('input[placeholder="admin"]') as HTMLInputElement)?.value || '';
+    const password = (document.querySelector('input[type="password"]') as HTMLInputElement)?.value || '';
+
+    if (!username.trim() || !password) {
       setError('Username and password are required');
       return;
     }
 
-    if (form.username.trim() !== 'admin' || form.password !== ADMIN_PASSWORD) {
+    if (username.trim() !== 'admin' || password !== ADMIN_PASSWORD) {
       setError('Invalid username or password');
       return;
     }
