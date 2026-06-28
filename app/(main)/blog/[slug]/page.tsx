@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
@@ -6,11 +7,62 @@ import BlogPostActions from './BlogPostActions';
 import BlogPostComments from './BlogPostComments';
 import { sanitizeHtml } from '@/lib/utils';
 
-// 静态 metadata 避免 React 并发渲染 Bug
-export const metadata = {
-  title: 'Blog Post',
-  description: 'Read our latest articles and insights',
-};
+async function getSettings() {
+  try {
+    const s = await prisma.settings.findMany();
+    const r: Record<string, string> = {};
+    s.forEach((x) => { r[x.key] = x.value; });
+    return r;
+  } catch { return {}; }
+}
+
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const [settings, post] = await Promise.all([
+    getSettings(),
+    prisma.post.findUnique({ where: { slug: params.slug } }).catch(() => null),
+  ]);
+
+  const siteTitle = settings.siteTitle || 'MasterStrap';
+
+  if (!post || !post.published) {
+    return {
+      title: `Not Found | ${siteTitle}`,
+      description: 'This page could not be found.',
+    };
+  }
+
+  const title = post.metaTitle || post.title;
+  const description = post.metaDesc || post.excerpt || `Read ${post.title} on ${siteTitle}`;
+  const keywords = post.metaKeywords
+    ? post.metaKeywords.split(',').map((k) => k.trim()).filter(Boolean)
+    : (Array.isArray(post.tags) ? post.tags : ['watch strap', 'blog', 'journal']);
+  const coverImage = post.coverImage || '/images/og-default.jpg';
+
+  return {
+    title: `${title} | ${siteTitle}`,
+    description,
+    keywords,
+    openGraph: {
+      title: `${title} | ${siteTitle}`,
+      description,
+      type: 'article',
+      publishedTime: post.createdAt.toISOString(),
+      modifiedTime: post.updatedAt.toISOString(),
+      siteName: siteTitle,
+      images: [coverImage],
+      tags: Array.isArray(post.tags) ? post.tags : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${title} | ${siteTitle}`,
+      description,
+      images: [coverImage],
+    },
+    alternates: {
+      canonical: `/blog/${post.slug}/`,
+    },
+  };
+}
 
 interface BlogPostPageProps {
   params: { slug: string };

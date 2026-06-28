@@ -42,6 +42,8 @@ export async function PUT(
     if (body.metaTitle !== undefined) data.metaTitle = body.metaTitle || null;
     if (body.metaDesc !== undefined) data.metaDesc = body.metaDesc || null;
 
+    if (body.metaKeywords !== undefined) data.metaKeywords = body.metaKeywords || null;
+
     const post = await prisma.post.update({
       where: { id: params.id },
       data,

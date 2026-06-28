@@ -35,6 +35,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Ensure metaKeywords column exists
+    try {
+      await prisma.$executeRaw`ALTER TABLE "posts" ADD COLUMN IF NOT EXISTS "metaKeywords" TEXT`;
+    } catch { /* ignore if already exists */ }
+
     const post = await prisma.post.create({
       data: {
         slug: body.slug,
@@ -47,6 +52,7 @@ export async function POST(request: NextRequest) {
         published: body.published === true,
         metaTitle: body.metaTitle || null,
         metaDesc: body.metaDesc || null,
+        metaKeywords: body.metaKeywords || null,
       },
     });
 

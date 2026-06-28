@@ -37,6 +37,7 @@ export default function BlogEditPage() {
     published: false,
     metaTitle: '',
     metaDesc: '',
+    metaKeywords: '',
   });
 
   const loadPost = useCallback(async () => {
@@ -56,6 +57,7 @@ export default function BlogEditPage() {
           published: post.published === true,
           metaTitle: post.metaTitle || '',
           metaDesc: post.metaDesc || '',
+          metaKeywords: post.metaKeywords || '',
         });
       }
     } catch (e) {
@@ -90,6 +92,7 @@ export default function BlogEditPage() {
     const payload = {
       ...form,
       tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
+      metaKeywords: form.metaKeywords || '',
     };
 
     const url = isNew ? '/api/admin/posts' : `/api/admin/posts/${postId}`;
@@ -498,6 +501,18 @@ export default function BlogEditPage() {
                           className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400"
                         />
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">SEO Keywords</label>
+                      <input
+                        type="text"
+                        value={form.metaKeywords}
+                        onChange={(e) => setForm((p) => ({ ...p, metaKeywords: e.target.value }))}
+                        placeholder="watch strap, leather, blog, fashion (comma separated)"
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">Comma-separated keywords for search engines</p>
                     </div>
 
                     <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
