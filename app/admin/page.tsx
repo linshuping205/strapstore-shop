@@ -153,7 +153,6 @@ export default function AdminPage() {
                   onChange={(e) => setForm({ ...form, username: e.target.value })}
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-300 transition-all"
                   placeholder="admin"
-                  required
                 />
               </div>
             </div>
@@ -167,7 +166,6 @@ export default function AdminPage() {
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-300 transition-all"
                   placeholder="••••••"
-                  required
                 />
               </div>
             </div>
