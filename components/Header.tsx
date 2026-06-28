@@ -82,8 +82,9 @@ export default function Header() {
               </p>
             </Link>
           </div>
-                    </p>
-                  <div className="flex items-center justify-end gap-2 md:gap-3 flex-1">
+
+          {/* 右侧：图标组 */}
+          <div className="flex items-center justify-end gap-2 md:gap-3 flex-1">
 
             {/* Heart - 收藏 */}
             <button className="hover:text-gray-600 transition" aria-label="Wishlist">
