@@ -65,40 +65,104 @@ export async function POST(request: NextRequest) {
 
     const results: string[] = [];
 
+    // Create UserRole enum
     try {
-      await prisma.user.findMany({ take: 1 });
-      results.push('users table already exists — no action needed');
-    } catch {
-      try {
-        await prisma.$executeRaw`
-          CREATE TABLE IF NOT EXISTS "users" (
-            id TEXT NOT NULL,
-            email TEXT NOT NULL,
-            name TEXT NOT NULL,
-            password TEXT NOT NULL,
-            role TEXT NOT NULL DEFAULT 'USER',
-            avatar TEXT,
-            phone TEXT,
-            address TEXT,
-            city TEXT,
-            country TEXT,
-            "postalCode" TEXT,
-            bio TEXT,
-            "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            "updatedAt" TIMESTAMP(3) NOT NULL,
-            CONSTRAINT "users_pkey" PRIMARY KEY (id),
-            CONSTRAINT "users_email_key" UNIQUE (email)
-          )
-        `;
-        results.push('users table created successfully');
-
-        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "users_email_idx" ON "users" (email)`;
-        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "users_role_idx" ON "users" (role)`;
-        results.push('users indexes created');
-      } catch (e: any) {
-        results.push(`Failed to create users table: ${e.message}`);
-        return NextResponse.json({ success: false, results }, { status: 500 });
+      await prisma.$executeRaw`CREATE TYPE "UserRole" AS ENUM ('USER', 'ADMIN')`;
+      results.push('UserRole enum created');
+    } catch (e: any) {
+      if (e.message.includes('already exists')) {
+        results.push('UserRole enum already exists');
+      } else {
+        results.push(`UserRole enum error: ${e.message}`);
       }
+    }
+
+    // Create ReviewStatus enum
+    try {
+      await prisma.$executeRaw`CREATE TYPE "ReviewStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED')`;
+      results.push('ReviewStatus enum created');
+    } catch (e: any) {
+      if (e.message.includes('already exists')) {
+        results.push('ReviewStatus enum already exists');
+      } else {
+        results.push(`ReviewStatus enum error: ${e.message}`);
+      }
+    }
+
+    // Create OrderStatus enum
+    try {
+      await prisma.$executeRaw`CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED')`;
+      results.push('OrderStatus enum created');
+    } catch (e: any) {
+      if (e.message.includes('already exists')) {
+        results.push('OrderStatus enum already exists');
+      } else {
+        results.push(`OrderStatus enum error: ${e.message}`);
+      }
+    }
+
+    // Drop and recreate users table with correct enum
+    try {
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "users"`;
+      results.push('Old users table dropped');
+
+      await prisma.$executeRaw`
+        CREATE TABLE "users" (
+          id TEXT NOT NULL,
+          email TEXT NOT NULL,
+          name TEXT NOT NULL,
+          password TEXT NOT NULL,
+          role "UserRole" NOT NULL DEFAULT 'USER',
+          avatar TEXT,
+          phone TEXT,
+          address TEXT,
+          city TEXT,
+          country TEXT,
+          "postalCode" TEXT,
+          bio TEXT,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL,
+          CONSTRAINT "users_pkey" PRIMARY KEY (id),
+          CONSTRAINT "users_email_key" UNIQUE (email)
+        )
+      `;
+      results.push('users table created with UserRole enum');
+
+      await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "users_email_idx" ON "users" (email)`;
+      await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "users_role_idx" ON "users" (role)`;
+      results.push('users indexes created');
+    } catch (e: any) {
+      results.push(`Failed to create users table: ${e.message}`);
+      return NextResponse.json({ success: false, results }, { status: 500 });
+    }
+
+    // Create product_reviews table
+    try {
+      await prisma.$executeRaw`DROP TABLE IF EXISTS "product_reviews"`;
+
+      await prisma.$executeRaw`
+        CREATE TABLE "product_reviews" (
+          id TEXT NOT NULL,
+          "productId" TEXT NOT NULL,
+          name TEXT NOT NULL,
+          email TEXT NOT NULL,
+          rating INTEGER NOT NULL,
+          title TEXT NOT NULL,
+          content TEXT NOT NULL,
+          status "ReviewStatus" NOT NULL DEFAULT 'PENDING',
+          "ipHash" TEXT NOT NULL,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL,
+          CONSTRAINT "product_reviews_pkey" PRIMARY KEY (id)
+        )
+      `;
+      results.push('product_reviews table created');
+
+      await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "product_reviews_productId_idx" ON "product_reviews" ("productId")`;
+      await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "product_reviews_status_idx" ON "product_reviews" (status)`;
+      results.push('product_reviews indexes created');
+    } catch (e: any) {
+      results.push(`product_reviews table error: ${e.message}`);
     }
 
     return NextResponse.json({ success: true, message: 'Database initialization complete', results });
