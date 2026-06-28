@@ -166,6 +166,7 @@ export interface User {
   createdAt: string;
   updatedAt: string;
 }
+export interface SiteSettings {
   siteTitle?: string;
   tagline?: string;
   siteIcon?: string;
