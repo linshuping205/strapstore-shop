@@ -24,7 +24,7 @@
     "lucide-react": "^0.378.0",
     "@vercel/blob": "^0.23.4",
     "bcryptjs": "^2.4.3",
-    "jose": "^5.3.0"
+    "jose": "^4.15.5"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
