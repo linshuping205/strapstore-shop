@@ -81,9 +81,17 @@ export async function generateMetadata(): Promise<Metadata> {
 
   // Set favicon if siteIcon is configured
   if (siteIcon) {
+    const ext = siteIcon.split('.').pop()?.toLowerCase();
+    let iconType = 'image/png';
+    if (ext === 'svg' || ext === 'svg+xml') iconType = 'image/svg+xml';
+    else if (ext === 'ico') iconType = 'image/x-icon';
+    else if (ext === 'jpg' || ext === 'jpeg') iconType = 'image/jpeg';
+    else if (ext === 'webp') iconType = 'image/webp';
+    else if (ext === 'gif') iconType = 'image/gif';
+
     metadata.icons = {
-      icon: { url: siteIcon, type: 'image/png' },
-      shortcut: { url: siteIcon, type: 'image/png' },
+      icon: { url: siteIcon, type: iconType },
+      shortcut: { url: siteIcon, type: iconType },
     };
   } else {
     // Default favicon fallback
