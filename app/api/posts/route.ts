@@ -54,7 +54,8 @@ export async function GET(request: NextRequest) {
       prisma.post.count({ where }),
     ]);
 
-    return successResponse({
+    return NextResponse.json({
+      success: true,
       data: posts,
       pagination: {
         page,
