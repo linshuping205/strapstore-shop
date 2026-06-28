@@ -17,14 +17,21 @@ async function getSettings() {
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const [settings, post] = await Promise.all([
-    getSettings(),
-    prisma.post.findUnique({ where: { slug: params.slug } }).catch(() => null),
-  ]);
-
+  const settings = await getSettings();
   const siteTitle = settings.siteTitle || 'MasterStrap';
 
-  if (!post || !post.published) {
+  let post: any = null;
+  try {
+    const rows = await prisma.$queryRaw`
+      SELECT id, slug, title, content, excerpt, coverImage, category, tags, published, likes, views, metaTitle, metaDesc, "createdAt", "updatedAt"
+      FROM posts WHERE slug = ${params.slug} AND published = true LIMIT 1
+    `;
+    post = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+  } catch {
+    post = null;
+  }
+
+  if (!post) {
     return {
       title: `Not Found | ${siteTitle}`,
       description: 'This page could not be found.',
@@ -33,9 +40,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
   const title = post.metaTitle || post.title;
   const description = post.metaDesc || post.excerpt || `Read ${post.title} on ${siteTitle}`;
-  const keywords = post.metaKeywords
-    ? post.metaKeywords.split(',').map((k) => k.trim()).filter(Boolean)
-    : (Array.isArray(post.tags) ? post.tags : ['watch strap', 'blog', 'journal']);
+  const tags = Array.isArray(post.tags) ? post.tags : [];
+  const keywords = tags.length > 0 ? tags : ['watch strap', 'blog', 'journal'];
   const coverImage = post.coverImage || '/images/og-default.jpg';
 
   return {
@@ -46,11 +52,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       title: `${title} | ${siteTitle}`,
       description,
       type: 'article',
-      publishedTime: post.createdAt.toISOString(),
-      modifiedTime: post.updatedAt.toISOString(),
+      publishedTime: new Date(post.createdAt).toISOString(),
+      modifiedTime: new Date(post.updatedAt).toISOString(),
       siteName: siteTitle,
       images: [coverImage],
-      tags: Array.isArray(post.tags) ? post.tags : [],
+      tags,
     },
     twitter: {
       card: 'summary_large_image',
@@ -70,14 +76,20 @@ interface BlogPostPageProps {
 
 // 异步数据加载组件
 async function PostData({ slug }: { slug: string }) {
+  let post: any = null;
   try {
-    const post = await prisma.post.findUnique({
-      where: { slug },
-    });
+    const rows = await prisma.$queryRaw`
+      SELECT id, slug, title, content, excerpt, coverImage, category, tags, published, likes, views, metaTitle, metaDesc, "createdAt", "updatedAt"
+      FROM posts WHERE slug = ${slug} AND published = true LIMIT 1
+    `;
+    post = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+  } catch {
+    post = null;
+  }
 
-    if (!post || !post.published) {
-      notFound();
-    }
+  if (!post) {
+    notFound();
+  }
 
     let commentCount = 0;
     try {
