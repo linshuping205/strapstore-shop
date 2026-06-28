@@ -100,17 +100,30 @@ export function hashIp(ip: string): string {
 import type { Product, Post } from '@/types';
 
 export function serializeProduct(product: any): Product {
+  if (!product) {
+    throw new Error('serializeProduct received null/undefined product');
+  }
   return {
     ...product,
-    price: typeof product.price === 'object' && product.price !== null ? product.price.toNumber() : Number(product.price),
-    comparePrice: product.comparePrice ? (typeof product.comparePrice === 'object' ? product.comparePrice.toNumber() : Number(product.comparePrice)) : null,
+    price: typeof product.price === 'object' && product.price !== null && typeof product.price.toNumber === 'function'
+      ? product.price.toNumber()
+      : Number(product.price ?? 0),
+    comparePrice: product.comparePrice
+      ? (typeof product.comparePrice === 'object' && product.comparePrice !== null && typeof product.comparePrice.toNumber === 'function'
+        ? product.comparePrice.toNumber()
+        : Number(product.comparePrice))
+      : null,
     images: product.images || [],
+    tags: product.tags || [],
     createdAt: product.createdAt instanceof Date ? product.createdAt.toISOString() : product.createdAt,
     updatedAt: product.updatedAt instanceof Date ? product.updatedAt.toISOString() : product.updatedAt,
   };
 }
 
 export function serializePost(post: any): Post {
+  if (!post) {
+    throw new Error('serializePost received null/undefined post');
+  }
   return {
     ...post,
     createdAt: post.createdAt instanceof Date ? post.createdAt.toISOString() : post.createdAt,
@@ -119,9 +132,11 @@ export function serializePost(post: any): Post {
 }
 
 export function serializeProducts(products: any[]): Product[] {
+  if (!Array.isArray(products)) return [];
   return products.map(serializeProduct);
 }
 
 export function serializePosts(posts: any[]): Post[] {
+  if (!Array.isArray(posts)) return [];
   return posts.map(serializePost);
 }

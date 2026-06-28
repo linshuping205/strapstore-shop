@@ -11,27 +11,52 @@ import type { Product } from '@/types';
 export const dynamic = 'force-dynamic';
 
 export default async function ProductPage({ params }: { params: { slug: string } }) {
-  const product = await prisma.product.findUnique({
-    where: { slug: params.slug },
-  });
+  let product: any;
+  let relatedProducts: any[] = [];
+  let approvedReviews: any[] = [];
+
+  try {
+    product = await prisma.product.findUnique({
+      where: { slug: params.slug },
+    });
+  } catch (err: any) {
+    console.error('ProductPage DB error:', err?.message || err);
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center max-w-md px-6">
+          <Package size={48} className="mx-auto text-gray-300 mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">Product Unavailable</h1>
+          <p className="text-gray-500 mb-6">We&apos;re having trouble loading this product. Please check back later or browse our collection.</p>
+          <Link href="/products/" className="inline-flex items-center gap-2 px-6 py-3 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition-colors">
+            <ArrowLeft size={18} /> Browse All Products
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (!product) notFound();
 
-  const [relatedProducts, approvedReviews] = await Promise.all([
-    prisma.product.findMany({
-      where: {
-        category: product.category,
-        id: { not: product.id },
-        isActive: true,
-      },
-      take: 4,
-      orderBy: { createdAt: 'desc' },
-    }),
-    prisma.productReview.findMany({
-      where: { productId: product.id, status: 'APPROVED' },
-      select: { rating: true },
-    }),
-  ]);
+  try {
+    [relatedProducts, approvedReviews] = await Promise.all([
+      prisma.product.findMany({
+        where: {
+          category: product.category,
+          id: { not: product.id },
+          isActive: true,
+        },
+        take: 4,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.productReview.findMany({
+        where: { productId: product.id, status: 'APPROVED' },
+        select: { rating: true },
+      }),
+    ]);
+  } catch (err: any) {
+    console.error('ProductPage related/reviews DB error:', err?.message || err);
+    // Continue with empty arrays — main product is still shown
+  }
 
   const serializedProduct = serializeProduct(product) as Product;
   const serializedRelatedProducts = serializeProducts(relatedProducts) as Product[];
