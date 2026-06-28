@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     }
 
     const maxAge = 60 * 60 * 24 * 7; // 7 days
-    const cookieValue = `admin-auth=${ADMIN_AUTH_TOKEN}; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}; Path=/`;
+    const cookieValue = `admin-auth=${ADMIN_AUTH_TOKEN}; HttpOnly; SameSite=Lax; Max-Age=${maxAge}; Path=/`;
 
     const response = new NextResponse(JSON.stringify({ success: true }), {
       status: 200,
