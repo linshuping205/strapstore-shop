@@ -105,8 +105,8 @@ export default function AdminPage() {
         setError(data.error || 'Login failed');
         return;
       }
-      setIsLoggedIn(true);
-      setDashboardLoading(true);
+      // Reload page so layout detects the new auth cookie
+      window.location.reload();
     } catch (err: any) {
       setError('Network error. Please try again.');
     } finally {

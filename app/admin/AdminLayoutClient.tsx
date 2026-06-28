@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Package,
@@ -28,18 +28,41 @@ const navItems = [
 
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [checking, setChecking] = useState(true);
   const pathname = usePathname();
-  const router = useRouter();
 
-  const handleLogout = async () => {
+  useEffect(() => {
+    const hasCookie = document.cookie.includes('admin-auth=');
+    setIsLoggedIn(hasCookie);
+    setChecking(false);
+  }, []);
+
+  const handleLogout = () => {
     document.cookie = 'admin-auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    router.push('/admin/login');
-    router.refresh();
+    window.location.href = '/admin';
   };
 
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Not logged in: render content without sidebar
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
+        <main className="min-h-screen">{children}</main>
+      </div>
+    );
+  }
+
+  // Logged in: full layout with sidebar
   return (
     <div className="flex h-screen bg-gray-50 font-sans text-gray-800">
-      {/* Sidebar */}
       <aside
         className={`flex flex-col bg-white border-r border-gray-200 transition-all duration-300 ${
           collapsed ? 'w-16' : 'w-64'
@@ -61,7 +84,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
 
         <nav className="flex-1 py-4 space-y-1">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href || pathname === item.href + '/';
             const Icon = item.icon;
             return (
               <Link
@@ -91,7 +114,6 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
         <div className="p-8 max-w-7xl mx-auto">{children}</div>
       </main>
