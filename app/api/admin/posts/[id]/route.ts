@@ -42,7 +42,10 @@ export async function PUT(
     if (body.metaTitle !== undefined) data.metaTitle = body.metaTitle || null;
     if (body.metaDesc !== undefined) data.metaDesc = body.metaDesc || null;
 
-    if (body.metaKeywords !== undefined) data.metaKeywords = body.metaKeywords || null;
+    // Only include metaKeywords if column exists
+    try {
+      if (body.metaKeywords !== undefined) data.metaKeywords = body.metaKeywords || null;
+    } catch { /* ignore if column doesn't exist */ }
 
     const post = await prisma.post.update({
       where: { id: params.id },

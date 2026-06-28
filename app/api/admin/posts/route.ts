@@ -6,9 +6,15 @@ export const dynamic = 'force-dynamic';
 // GET /api/admin/posts — list all posts (including drafts)
 export async function GET() {
   try {
-    // Try prisma ORM first (more reliable than raw SQL)
     const posts = await prisma.post.findMany({
       orderBy: { createdAt: 'desc' },
+      select: {
+        id: true, slug: true, title: true, excerpt: true,
+        coverImage: true, category: true, tags: true,
+        published: true, likes: true, views: true,
+        metaTitle: true, metaDesc: true,
+        createdAt: true, updatedAt: true,
+      },
     });
     
     console.log('Admin posts GET findMany:', posts.length, 'posts');
@@ -35,10 +41,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Ensure metaKeywords column exists
+    // Ensure metaKeywords column exists (best effort)
     try {
       await prisma.$executeRaw`ALTER TABLE "posts" ADD COLUMN IF NOT EXISTS "metaKeywords" TEXT`;
-    } catch { /* ignore if already exists */ }
+    } catch { /* ignore if already exists or no permission */ }
 
     const post = await prisma.post.create({
       data: {
@@ -52,7 +58,6 @@ export async function POST(request: NextRequest) {
         published: body.published === true,
         metaTitle: body.metaTitle || null,
         metaDesc: body.metaDesc || null,
-        metaKeywords: body.metaKeywords || null,
       },
     });
 
