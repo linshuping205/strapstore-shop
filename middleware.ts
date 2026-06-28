@@ -11,7 +11,7 @@ export async function middleware(request: NextRequest) {
     }
 
     const adminAuth = request.cookies.get('admin-auth')?.value;
-    const validToken = process.env.ADMIN_AUTH_TOKEN || 'admin-secret-token';
+    const validToken = 'admin-secret-token-2024';
 
     if (adminAuth !== validToken) {
       return NextResponse.redirect(new URL('/admin/', request.url));

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
-const ADMIN_AUTH_TOKEN = process.env.ADMIN_AUTH_TOKEN || 'admin-secret-token';
+const ADMIN_USERNAME = 'admin';
+const ADMIN_PASSWORD = 'admin123';
+const ADMIN_AUTH_TOKEN = 'admin-secret-token-2024';
 
 export async function POST(request: Request) {
   try {
