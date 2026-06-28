@@ -17,6 +17,11 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith('/admin')) {
+    // Allow setup page without authentication
+    if (pathname === '/admin/setup') {
+      return NextResponse.next();
+    }
+
     const token = request.cookies.get('auth-token')?.value;
     const user = token ? decodeJWT(token) : null;
 
