@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import ProductCard from '@/components/ProductCard'
 import { Package } from 'lucide-react'
+import type { Product } from '@/types'
 
 export const dynamic = 'force-dynamic'
 

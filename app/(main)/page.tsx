@@ -5,7 +5,7 @@ import ProductCard from '@/components/ProductCard';
 import HeroBanner from '@/components/HeroBanner';
 import Craftsmanship from '@/components/Craftsmanship';
 import Testimonials from '@/components/Testimonials';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, APP_NAME } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

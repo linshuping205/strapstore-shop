@@ -6,8 +6,6 @@ import type { LucideIcon } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import type { Order } from '@/types';
 
-import type { Order } from '@/types';
-
 const statusConfig: Record<string, { color: string; icon: LucideIcon; label: string }> = {
   PENDING: { color: 'bg-amber-50 text-amber-600', icon: Package, label: 'Pending' },
   PAID: { color: 'bg-blue-50 text-blue-600', icon: Package, label: 'Paid' },
@@ -90,10 +88,6 @@ export default function OrdersPage() {
       year: 'numeric',
     });
 
-  const formatPrice = (price: number | string | null | undefined): string => {
-    const num = Number(price);
-    return isNaN(num) ? '0.00' : num.toFixed(2);
-  };
 
   return (
     <div>

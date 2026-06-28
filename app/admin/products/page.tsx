@@ -6,8 +6,6 @@ import { Search, Plus, Pencil, Trash2, Eye, RefreshCw, Package } from 'lucide-re
 import type { Product } from '@/types';
 import { formatPrice } from '@/lib/utils';
 
-import { Product } from '@/types';
-
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);

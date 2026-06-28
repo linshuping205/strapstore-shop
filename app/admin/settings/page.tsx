@@ -5,7 +5,7 @@ import { Save, Upload, Globe, Mail, Type, Tag, ImageIcon, Loader2, CheckCircle }
 
 import { SiteSettings } from '@/types';
 
-const DEFAULT_SETTINGS: SettingsForm = {
+const DEFAULT_SETTINGS: SiteSettings = {
   siteTitle: 'Master Strap',
   tagline: 'Handcrafted Leather Watch Straps',
   adminEmail: 'hello@masterstrap.com',
