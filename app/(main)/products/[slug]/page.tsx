@@ -36,9 +36,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const serializedProduct = serializeProduct(product) as Product;
   const serializedRelatedProducts = serializeProducts(relatedProducts) as Product[];
 
-  const hasComparePrice = serializedProduct.comparePrice && serializedProduct.comparePrice > serializedProduct.price;
+  const comparePrice = serializedProduct.comparePrice;
+  const hasComparePrice = comparePrice !== null && comparePrice > serializedProduct.price;
   const discount = hasComparePrice
-    ? Math.round((1 - serializedProduct.price / serializedProduct.comparePrice) * 100)
+    ? Math.round((1 - serializedProduct.price / comparePrice) * 100)
     : 0;
 
   const avgRating = approvedReviews.length > 0
