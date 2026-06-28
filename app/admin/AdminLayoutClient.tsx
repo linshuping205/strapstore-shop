@@ -19,6 +19,7 @@ import {
   Lock,
   ArrowRight,
   AlertCircle,
+  CreditCard,
 } from 'lucide-react';
 
 const navItems = [
@@ -26,6 +27,7 @@ const navItems = [
   { href: '/admin/products', label: 'Products', icon: Package },
   { href: '/admin/blogs', label: 'Blogs', icon: FileText },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
+  { href: '/admin/payments', label: 'Payments', icon: CreditCard },
   { href: '/admin/reviews', label: 'Reviews', icon: MessageSquare },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
