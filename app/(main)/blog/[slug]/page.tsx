@@ -22,16 +22,13 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
   let post: any = null;
   try {
-    post = await prisma.post.findFirst({
-      where: { slug: params.slug, published: true },
-      select: {
-        id: true, slug: true, title: true, content: true, excerpt: true,
-        coverImage: true, category: true, tags: true, published: true,
-        likes: true, views: true, metaTitle: true, metaDesc: true,
-        createdAt: true, updatedAt: true,
-      },
-    });
-  } catch {
+    const rows = await prisma.$queryRawUnsafe(
+      `SELECT id, slug, title, content, excerpt, "coverImage", category, tags, published, likes, views, "metaTitle", "metaDesc", "createdAt", "updatedAt" FROM posts WHERE slug = $1 AND published = true LIMIT 1`,
+      params.slug
+    );
+    post = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+  } catch (e) {
+    console.error('Blog metadata query error:', e);
     post = null;
   }
 
@@ -82,16 +79,13 @@ interface BlogPostPageProps {
 async function PostData({ slug }: { slug: string }) {
   let post: any = null;
   try {
-    post = await prisma.post.findFirst({
-      where: { slug, published: true },
-      select: {
-        id: true, slug: true, title: true, content: true, excerpt: true,
-        coverImage: true, category: true, tags: true, published: true,
-        likes: true, views: true, metaTitle: true, metaDesc: true,
-        createdAt: true, updatedAt: true,
-      },
-    });
-  } catch {
+    const rows = await prisma.$queryRawUnsafe(
+      `SELECT id, slug, title, content, excerpt, "coverImage", category, tags, published, likes, views, "metaTitle", "metaDesc", "createdAt", "updatedAt" FROM posts WHERE slug = $1 AND published = true LIMIT 1`,
+      slug
+    );
+    post = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+  } catch (e) {
+    console.error('Blog post query error:', e);
     post = null;
   }
 
