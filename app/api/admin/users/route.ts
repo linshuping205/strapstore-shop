@@ -33,6 +33,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Admin users GET error:', error?.message || error);
-    return NextResponse.json({ success: false, error: 'Failed to load users' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Failed to load users: ' + (error?.message || String(error)) }, { status: 500 });
   }
 }
