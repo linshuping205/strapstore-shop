@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { hashPassword, createToken, setAuthCookie } from '@/lib/auth';
+import { hashPassword, createToken } from '@/lib/auth';
+import { cookies } from 'next/headers';
 import { errorResponse, successResponse } from '@/lib/api';
 
 export async function POST(request: Request) {
@@ -33,7 +34,15 @@ export async function POST(request: Request) {
       role: user.role,
       name: user.name,
     });
-    await setAuthCookie(token);
+
+    const cookieStore = await cookies();
+    cookieStore.set('auth-token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+    });
 
     return successResponse({ user }, 201);
   } catch (error: any) {
