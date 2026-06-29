@@ -17,14 +17,21 @@ export async function POST(
 
     // Check if already viewed within 24 hours
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const existing = await prisma.postInteraction.findFirst({
-      where: {
-        postId,
-        type: 'view',
-        ipHash,
-        createdAt: { gte: oneDayAgo },
-      },
-    });
+    
+    let existing = null;
+    try {
+      existing = await prisma.postInteraction.findFirst({
+        where: {
+          postId,
+          type: 'view',
+          ipHash,
+          createdAt: { gte: oneDayAgo },
+        },
+      });
+    } catch (e) {
+      // Table may not exist — fallback to direct update
+      console.log('PostInteraction table not ready, falling back to direct update');
+    }
 
     if (existing) {
       // Return current view count without incrementing
@@ -35,10 +42,14 @@ export async function POST(
       return NextResponse.json({ success: true, views: post?.views || 0 });
     }
 
-    // Record interaction
-    await prisma.postInteraction.create({
-      data: { postId, type: 'view', ipHash },
-    });
+    // Record interaction if table exists
+    try {
+      await prisma.postInteraction.create({
+        data: { postId, type: 'view', ipHash },
+      });
+    } catch (e) {
+      console.log('Skipping PostInteraction create, table not ready');
+    }
 
     const post = await prisma.post.update({
       where: { id: postId },

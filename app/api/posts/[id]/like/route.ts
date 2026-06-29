@@ -16,24 +16,34 @@ export async function POST(
     const ipHash = hashIp(ip);
 
     // Check if already liked
-    const existing = await prisma.postInteraction.findUnique({
-      where: {
-        postId_type_ipHash: {
-          postId,
-          type: 'like',
-          ipHash,
+    let existing = null;
+    try {
+      existing = await prisma.postInteraction.findUnique({
+        where: {
+          postId_type_ipHash: {
+            postId,
+            type: 'like',
+            ipHash,
+          },
         },
-      },
-    });
+      });
+    } catch (e) {
+      // Table may not exist — fallback to direct update
+      console.log('PostInteraction table not ready, falling back to direct update');
+    }
 
     if (existing) {
       return NextResponse.json({ success: false, error: 'Already liked' }, { status: 429 });
     }
 
-    // Record interaction
-    await prisma.postInteraction.create({
-      data: { postId, type: 'like', ipHash },
-    });
+    // Record interaction if table exists
+    try {
+      await prisma.postInteraction.create({
+        data: { postId, type: 'like', ipHash },
+      });
+    } catch (e) {
+      console.log('Skipping PostInteraction create, table not ready');
+    }
 
     const post = await prisma.post.update({
       where: { id: postId },
