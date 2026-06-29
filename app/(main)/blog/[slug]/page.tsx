@@ -135,7 +135,7 @@ async function PostData({ slug }: { slug: string }) {
 
           {post.tags && post.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-8">
-              {post.tags.map((tag) => (
+              {post.tags.map((tag: string) => (
                 <span key={tag} className="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-full">
                   {tag}
                 </span>
