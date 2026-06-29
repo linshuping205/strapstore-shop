@@ -157,6 +157,7 @@ export default function BlogsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Blog Posts</h1>
+        <span className="text-xs text-gray-400">v2</span>
         <div className="flex items-center gap-3">
           <button
             onClick={loadPosts}
