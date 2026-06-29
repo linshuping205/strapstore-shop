@@ -36,16 +36,14 @@ export async function PUT(
     if (body.content !== undefined) data.content = body.content;
     if (body.excerpt !== undefined) data.excerpt = body.excerpt || null;
     if (body.coverImage !== undefined) data.coverImage = body.coverImage || null;
+    if (body.coverImageAlt !== undefined) data.coverImageAlt = body.coverImageAlt || null;
+    if (body.coverImageTitle !== undefined) data.coverImageTitle = body.coverImageTitle || null;
     if (body.category !== undefined) data.category = body.category;
     if (body.tags !== undefined) data.tags = Array.isArray(body.tags) ? body.tags : [];
     if (body.published !== undefined) data.published = body.published === true;
     if (body.metaTitle !== undefined) data.metaTitle = body.metaTitle || null;
     if (body.metaDesc !== undefined) data.metaDesc = body.metaDesc || null;
-
-    // Only include metaKeywords if column exists
-    try {
-      if (body.metaKeywords !== undefined) data.metaKeywords = body.metaKeywords || null;
-    } catch { /* ignore if column doesn't exist */ }
+    if (body.metaKeywords !== undefined) data.metaKeywords = body.metaKeywords || null;
 
     const post = await prisma.post.update({
       where: { id: params.id },

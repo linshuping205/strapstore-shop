@@ -32,6 +32,8 @@ export default function BlogEditPage() {
     excerpt: '',
     content: '',
     coverImage: '',
+    coverImageAlt: '',
+    coverImageTitle: '',
     category: 'Guide',
     tags: '',
     published: false,
@@ -52,6 +54,8 @@ export default function BlogEditPage() {
           excerpt: post.excerpt || '',
           content: post.content || '',
           coverImage: post.coverImage || '',
+          coverImageAlt: post.coverImageAlt || '',
+          coverImageTitle: post.coverImageTitle || '',
           category: post.category || 'Guide',
           tags: Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || ''),
           published: post.published === true,
@@ -93,6 +97,8 @@ export default function BlogEditPage() {
       ...form,
       tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
       metaKeywords: form.metaKeywords || '',
+      coverImageAlt: form.coverImageAlt || '',
+      coverImageTitle: form.coverImageTitle || '',
     };
 
     const url = isNew ? '/api/admin/posts' : `/api/admin/posts/${postId}`;
@@ -400,10 +406,10 @@ export default function BlogEditPage() {
                   <div className="space-y-4">
                     {form.coverImage ? (
                       <div className="relative w-64 h-40 rounded-lg overflow-hidden border border-gray-200 group">
-                        <img src={form.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                        <img src={form.coverImage} alt={form.coverImageAlt || 'Cover'} className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors" />
                         <button
-                          onClick={() => setForm((p) => ({ ...p, coverImage: '' }))}
+                          onClick={() => setForm((p) => ({ ...p, coverImage: '', coverImageAlt: '', coverImageTitle: '' }))}
                           className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
                         >
                           <X size={14} />
@@ -428,6 +434,33 @@ export default function BlogEditPage() {
                           disabled={uploading}
                         />
                       </label>
+                    )}
+
+                    {form.coverImage && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1.5">Image Alt Text (SEO)</label>
+                          <input
+                            type="text"
+                            value={form.coverImageAlt}
+                            onChange={(e) => setForm((p) => ({ ...p, coverImageAlt: e.target.value }))}
+                            placeholder="Descriptive text for accessibility and SEO"
+                            className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400"
+                          />
+                          <p className="text-xs text-gray-400 mt-1">Used by screen readers and search engines</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1.5">Image Title (SEO)</label>
+                          <input
+                            type="text"
+                            value={form.coverImageTitle}
+                            onChange={(e) => setForm((p) => ({ ...p, coverImageTitle: e.target.value }))}
+                            placeholder="Image title for SEO and tooltip"
+                            className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400"
+                          />
+                          <p className="text-xs text-gray-400 mt-1">Shown on hover and used by search engines</p>
+                        </div>
+                      </div>
                     )}
 
                     <div>

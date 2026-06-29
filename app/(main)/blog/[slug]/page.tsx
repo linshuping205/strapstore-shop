@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   let post: any = null;
   try {
     const rows = await prisma.$queryRawUnsafe(
-      `SELECT id, slug, title, content, excerpt, "coverImage", category, tags, published, likes, views, "metaTitle", "metaDesc", "createdAt", "updatedAt" FROM posts WHERE slug = $1 AND published = true LIMIT 1`,
+      `SELECT id, slug, title, content, excerpt, "coverImage", "coverImageAlt", "coverImageTitle", category, tags, published, likes, views, "metaTitle", "metaDesc", "createdAt", "updatedAt" FROM posts WHERE slug = $1 AND published = true LIMIT 1`,
       params.slug
     );
     post = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
@@ -80,7 +80,7 @@ async function PostData({ slug }: { slug: string }) {
   let post: any = null;
   try {
     const rows = await prisma.$queryRawUnsafe(
-      `SELECT id, slug, title, content, excerpt, "coverImage", category, tags, published, likes, views, "metaTitle", "metaDesc", "createdAt", "updatedAt" FROM posts WHERE slug = $1 AND published = true LIMIT 1`,
+      `SELECT id, slug, title, content, excerpt, "coverImage", "coverImageAlt", "coverImageTitle", category, tags, published, likes, views, "metaTitle", "metaDesc", "createdAt", "updatedAt" FROM posts WHERE slug = $1 AND published = true LIMIT 1`,
       slug
     );
     post = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
@@ -143,6 +143,19 @@ async function PostData({ slug }: { slug: string }) {
             </div>
           )}
         </div>
+
+        {/* Cover Image with SEO attributes */}
+        {post.coverImage && (
+          <div className="mb-12">
+            <img
+              src={post.coverImage}
+              alt={post.coverImageAlt || post.title}
+              title={post.coverImageTitle || post.title}
+              className="w-full h-auto rounded-lg object-cover"
+              loading="eager"
+            />
+          </div>
+        )}
 
         {/* 文章内容 - 已净化 XSS */}
         <div

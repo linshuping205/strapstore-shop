@@ -79,6 +79,8 @@ model Post {
   content   String   @db.Text
   excerpt   String?
   coverImage String?
+  coverImageAlt String?
+  coverImageTitle String?
   category  String
   tags      String[]
   published Boolean  @default(true)

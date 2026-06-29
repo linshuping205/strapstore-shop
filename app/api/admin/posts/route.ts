@@ -10,7 +10,8 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
       select: {
         id: true, slug: true, title: true, excerpt: true,
-        coverImage: true, category: true, tags: true,
+        coverImage: true, coverImageAlt: true, coverImageTitle: true,
+        category: true, tags: true,
         published: true, likes: true, views: true,
         metaTitle: true, metaDesc: true,
         createdAt: true, updatedAt: true,
@@ -41,9 +42,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Ensure metaKeywords column exists (best effort)
+    // Ensure metaKeywords, coverImageAlt, coverImageTitle columns exist (best effort)
     try {
       await prisma.$executeRaw`ALTER TABLE "posts" ADD COLUMN IF NOT EXISTS "metaKeywords" TEXT`;
+      await prisma.$executeRaw`ALTER TABLE "posts" ADD COLUMN IF NOT EXISTS "coverImageAlt" TEXT`;
+      await prisma.$executeRaw`ALTER TABLE "posts" ADD COLUMN IF NOT EXISTS "coverImageTitle" TEXT`;
     } catch { /* ignore if already exists or no permission */ }
 
     const post = await prisma.post.create({
@@ -53,11 +56,14 @@ export async function POST(request: NextRequest) {
         content: body.content || '',
         excerpt: body.excerpt || null,
         coverImage: body.coverImage || null,
+        coverImageAlt: body.coverImageAlt || null,
+        coverImageTitle: body.coverImageTitle || null,
         category: body.category || 'Guide',
         tags: Array.isArray(body.tags) ? body.tags : [],
         published: body.published === true,
         metaTitle: body.metaTitle || null,
         metaDesc: body.metaDesc || null,
+        metaKeywords: body.metaKeywords || null,
       },
     });
 
