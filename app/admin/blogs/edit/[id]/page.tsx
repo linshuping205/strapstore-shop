@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
-  ArrowLeft, Save, Trash2, X, CheckCircle, Loader2, Upload, Eye,
+  ArrowLeft, Save, Trash2, X, CheckCircle, Loader2, Upload, Eye, Image,
   ChevronDown, ChevronUp
 } from 'lucide-react';
 import RichTextEditor from '@/components/blog/RichTextEditor';
@@ -19,6 +19,10 @@ export default function BlogEditPage() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
+
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [autoSaving, setAutoSaving] = useState(false);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [form, setForm] = useState({
     title: '',
@@ -82,6 +86,68 @@ export default function BlogEditPage() {
     loadPost();
   }, [loadPost]);
 
+  // Load draft from localStorage for new posts
+  useEffect(() => {
+    if (!isNew) return;
+    const draft = localStorage.getItem('draft-post-new');
+    if (draft) {
+      try {
+        const parsed = JSON.parse(draft);
+        setForm((prev) => ({ ...prev, ...parsed }));
+      } catch {
+        // ignore invalid draft
+      }
+    }
+  }, [isNew]);
+
+  // Auto-save draft to localStorage (and silently PUT for existing posts)
+  useEffect(() => {
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      const doAutoSave = async () => {
+        setAutoSaving(true);
+        try {
+          localStorage.setItem('draft-post-' + (postId || 'new'), JSON.stringify(form));
+          setLastSaved(new Date());
+          if (!isNew && postId) {
+            const payload = {
+              ...form,
+              published: form.published,
+              tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
+              metaKeywords: form.metaKeywords || '',
+              coverImageAlt: form.coverImageAlt || '',
+              coverImageTitle: form.coverImageTitle || '',
+            };
+            const res = await fetch(`/api/admin/posts/${postId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+            if (!res.ok) {
+              console.error('Auto-save API failed');
+            }
+          }
+        } catch (e) {
+          console.error('Auto-save error:', e);
+        } finally {
+          setAutoSaving(false);
+        }
+      };
+      doAutoSave();
+    }, 30000);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [form, isNew, postId]);
+
+  const formatRelativeTime = (date: Date) => {
+    const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (diff < 60) return 'Saved just now';
+    if (diff < 3600) return `Saved ${Math.floor(diff / 60)} min ago`;
+    if (diff < 86400) return `Saved ${Math.floor(diff / 3600)} hour ago`;
+    return `Saved ${Math.floor(diff / 86400)} day ago`;
+  };
+
   const autoSlug = (title: string) =>
     title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').slice(0, 60);
 
@@ -96,6 +162,7 @@ export default function BlogEditPage() {
   const handleSave = async (forcePublished?: boolean) => {
     if (!validate()) return;
 
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     setSaving(true);
     const payload = {
       ...form,
@@ -211,6 +278,16 @@ export default function BlogEditPage() {
             <span className="text-sm font-medium text-gray-900">
               {form.title.trim() || 'No title'} · Post
             </span>
+            <span className="text-sm text-gray-400">
+              {autoSaving ? (
+                <span className="inline-flex items-center gap-1">
+                  <Loader2 size={12} className="animate-spin" />
+                  Saving...
+                </span>
+              ) : lastSaved ? (
+                formatRelativeTime(lastSaved)
+              ) : null}
+            </span>
           </div>
           <div className="flex items-center gap-3">
             {!isNew && (
@@ -279,6 +356,47 @@ export default function BlogEditPage() {
                 />
                 {errors.title && (
                   <p className="text-xs text-red-500 mt-1">{errors.title}</p>
+                )}
+              </div>
+
+              {/* Featured Image Preview */}
+              <div className="space-y-1">
+                {form.coverImage ? (
+                  <div className="relative group">
+                    <img
+                      src={form.coverImage}
+                      alt={form.coverImageAlt || 'Featured image'}
+                      className="w-full rounded-lg shadow-md max-h-[300px] object-cover"
+                    />
+                    <div className="mt-1 flex items-center justify-between">
+                      <span className="text-xs text-gray-500">Featured Image</span>
+                      <button
+                        onClick={() =>
+                          setForm((p) => ({
+                            ...p,
+                            coverImage: '',
+                            coverImageAlt: '',
+                            coverImageTitle: '',
+                          }))
+                        }
+                        className="text-xs text-red-600 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-48 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <Image size={24} className="text-gray-400 mb-2" />
+                    <span className="text-sm text-gray-500">Set featured image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                      disabled={uploading}
+                    />
+                  </label>
                 )}
               </div>
 
