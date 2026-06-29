@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
-  ArrowLeft, Save, Trash2, X, CheckCircle, Loader2, Upload, Eye, Image,
+  ArrowLeft, Save, Trash2, X, CheckCircle, Loader2, Upload, Eye,
   ChevronDown, ChevronUp
 } from 'lucide-react';
 import RichTextEditor from '@/components/blog/RichTextEditor';
@@ -356,47 +356,6 @@ export default function BlogEditPage() {
                 />
                 {errors.title && (
                   <p className="text-xs text-red-500 mt-1">{errors.title}</p>
-                )}
-              </div>
-
-              {/* Featured Image Preview */}
-              <div className="space-y-1">
-                {form.coverImage ? (
-                  <div className="relative group">
-                    <img
-                      src={form.coverImage}
-                      alt={form.coverImageAlt || 'Featured image'}
-                      className="w-full rounded-lg shadow-md max-h-[300px] object-cover"
-                    />
-                    <div className="mt-1 flex items-center justify-between">
-                      <span className="text-xs text-gray-500">Featured Image</span>
-                      <button
-                        onClick={() =>
-                          setForm((p) => ({
-                            ...p,
-                            coverImage: '',
-                            coverImageAlt: '',
-                            coverImageTitle: '',
-                          }))
-                        }
-                        className="text-xs text-red-600 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-48 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                    <Image size={24} className="text-gray-400 mb-2" />
-                    <span className="text-sm text-gray-500">Set featured image</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageUpload}
-                      disabled={uploading}
-                    />
-                  </label>
                 )}
               </div>
 
