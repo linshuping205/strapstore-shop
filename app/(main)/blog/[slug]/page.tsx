@@ -179,7 +179,6 @@ async function PostData({ slug }: { slug: string }) {
         </div>
       </>
     );
-  }
 }
 
 export default function BlogPostPage({ params }: BlogPostPageProps) {
