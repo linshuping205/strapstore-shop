@@ -15,6 +15,7 @@ export async function GET() {
         published: true, likes: true, views: true,
         metaTitle: true, metaDesc: true,
         createdAt: true, updatedAt: true,
+        _count: { select: { comments: true } },
       },
     });
     

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Heart, Eye, MessageCircle, Share2 } from 'lucide-react';
 
 interface BlogPostActionsProps {
@@ -18,7 +18,19 @@ export default function BlogPostActions({
 }: BlogPostActionsProps) {
   const [likes, setLikes] = useState(initialLikes);
   const [liked, setLiked] = useState(false);
-  const [views] = useState(initialViews);
+  const [views, setViews] = useState(initialViews);
+
+  useEffect(() => {
+    // Record page view on load
+    fetch(`/api/posts/${postId}/view`, { method: 'POST' })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.views !== undefined) {
+          setViews(data.views);
+        }
+      })
+      .catch(() => {});
+  }, [postId]);
 
   const handleLike = async () => {
     if (liked) return;
