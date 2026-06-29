@@ -179,9 +179,6 @@ async function PostData({ slug }: { slug: string }) {
         </div>
       </>
     );
-  } catch (error) {
-    console.error('Error loading post:', error);
-    notFound();
   }
 }
 
