@@ -11,6 +11,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   LogOut,
   MessageSquare,
   Users,
@@ -25,7 +26,12 @@ import {
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/products', label: 'Products', icon: Package },
-  { href: '/admin/blogs', label: 'Posts', icon: FileText },
+  { label: 'Posts', icon: FileText, children: [
+  { href: '/admin/posts', label: 'All Posts' },
+  { href: '/admin/blogs/edit/new', label: 'Add Post' },
+  { href: '/admin/posts/categories', label: 'Categories' },
+  { href: '/admin/posts/tags', label: 'Tags' },
+] },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/admin/payments', label: 'Payments', icon: CreditCard },
   { href: '/admin/reviews', label: 'Reviews', icon: MessageSquare },
@@ -41,6 +47,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [checking, setChecking] = useState(true);
   const pathname = usePathname();
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
 
   const [form, setForm] = useState({ username: '', password: '' });
   const [loading, setLoading] = useState(false);
@@ -216,12 +223,66 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
 
         <nav className="flex-1 py-4 space-y-1">
           {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname === item.href + '/';
-            const Icon = item.icon;
+            const hasChildren = 'children' in item && item.children && item.children.length > 0;
+            const Icon = item.icon as any;
+            const isGroupActive = hasChildren && item.children?.some((c) => pathname === c.href || pathname === c.href + '/');
+            const isActive = !hasChildren && (pathname === item.href || pathname === item.href + '/');
+            const expanded = isGroupActive || (expandedMenus[item.label] && !collapsed);
+
+            if (hasChildren) {
+              return (
+                <div key={item.label} className="mx-2">
+                  <button
+                    onClick={() => {
+                      if (!collapsed) {
+                        setExpandedMenus((prev) => ({ ...prev, [item.label]: !prev[item.label] }));
+                      }
+                    }}
+                    className={`flex items-center w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      isGroupActive
+                        ? 'bg-amber-50 text-amber-700'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    <Icon size={20} className={collapsed ? '' : 'mr-3'} />
+                    {!collapsed && (
+                      <>
+                        <span className="flex-1 text-left">{item.label}</span>
+                        <ChevronDown
+                          size={16}
+                          className={`text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`}
+                        />
+                      </>
+                    )}
+                  </button>
+                  {!collapsed && expanded && (
+                    <div className="ml-9 mt-1 space-y-0.5">
+                      {item.children?.map((child) => {
+                        const childActive = pathname === child.href || pathname === child.href + '/';
+                        return (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            className={`block px-3 py-2 rounded-md text-sm transition-colors ${
+                              childActive
+                                ? 'bg-amber-50 text-amber-700 font-medium'
+                                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                            }`}
+                          >
+                            {child.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <Link
-                key={item.href}
-                href={item.href}
+                key={item.href as string}
+                href={item.href as string}
                 className={`flex items-center mx-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
                     ? 'bg-amber-50 text-amber-700'
