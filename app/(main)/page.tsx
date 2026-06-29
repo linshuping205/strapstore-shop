@@ -140,14 +140,14 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
+      <section className="py-16 md:py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
+          <div className="text-center mb-10 md:mb-16">
             <span className="text-xs tracking-[3px] uppercase text-accent font-semibold mb-4 inline-block">Journal</span>
-            <h2 className="font-heading text-[clamp(1.8rem,3.2vw,2.6rem)] font-normal mb-4 leading-tight">Craft & Stories</h2>
-            <p className="text-gray-500 max-w-xl mx-auto font-light text-lg leading-relaxed">Explore the material science, heritage, and styling aesthetics behind every strap.</p>
+            <h2 className="font-heading text-[clamp(1.6rem,3.2vw,2.6rem)] font-normal mb-4 leading-tight">Craft & Stories</h2>
+            <p className="text-gray-500 max-w-xl mx-auto font-light text-base md:text-lg leading-relaxed px-4 md:px-0">Explore the material science, heritage, and styling aesthetics behind every strap.</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
             {posts.length > 0 ? (
               posts.map((post) => (
                 <article key={post.id} className="group">

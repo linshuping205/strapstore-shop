@@ -69,9 +69,9 @@ export default function BlogPostComments({ postId }: BlogPostCommentsProps) {
 
   return (
     <div className="space-y-8">
-      <h3 className="text-2xl font-bold text-gray-900">Comments</h3>
+      <h3 className="text-xl md:text-2xl font-bold text-gray-900">Comments</h3>
 
-      <form onSubmit={handleSubmit} className="space-y-4 bg-gray-50 p-6 rounded-lg">
+      <form onSubmit={handleSubmit} className="space-y-4 bg-gray-50 p-4 md:p-6 rounded-lg">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>

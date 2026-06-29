@@ -43,35 +43,35 @@ export default function BlogPostActions({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-4">
+    <div className="flex flex-wrap items-center gap-2 md:gap-4">
       <button
         onClick={handleLike}
-        className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${
+        className={`flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full transition-all text-sm ${
           liked
             ? 'bg-red-100 text-red-600'
             : 'bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-500'
         }`}
       >
-        <Heart size={20} fill={liked ? 'currentColor' : 'none'} />
-        <span className="text-sm font-medium">{likes}</span>
+        <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
+        <span className="font-medium">{likes}</span>
       </button>
 
-      <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full text-gray-600">
-        <Eye size={20} />
-        <span className="text-sm font-medium">{views}</span>
+      <div className="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-gray-100 rounded-full text-gray-600 text-sm">
+        <Eye size={18} />
+        <span className="font-medium">{views}</span>
       </div>
 
-      <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full text-gray-600">
-        <MessageCircle size={20} />
-        <span className="text-sm font-medium">{commentCount}</span>
+      <div className="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-gray-100 rounded-full text-gray-600 text-sm">
+        <MessageCircle size={18} />
+        <span className="font-medium">{commentCount}</span>
       </div>
 
       <button
         onClick={handleShare}
-        className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition-colors ml-auto"
+        className="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition-colors text-sm ml-auto"
       >
-        <Share2 size={20} />
-        <span className="text-sm font-medium">Share</span>
+        <Share2 size={18} />
+        <span className="font-medium">Share</span>
       </button>
     </div>
   );

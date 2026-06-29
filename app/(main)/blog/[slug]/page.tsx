@@ -116,11 +116,11 @@ async function PostData({ slug }: { slug: string }) {
             Back to Journal
           </Link>
 
-          <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
             {post.title}
           </h1>
 
-          <div className="flex items-center gap-4 text-sm text-gray-500 mb-6">
+          <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-500 mb-6">
             {post.category && (
               <span className="px-2 py-1 bg-gray-100 rounded-md text-gray-600">
                 {post.category}
@@ -134,9 +134,9 @@ async function PostData({ slug }: { slug: string }) {
           </div>
 
           {post.tags && post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-8">
+            <div className="flex flex-wrap gap-2 mb-6 md:mb-8">
               {post.tags.map((tag: string) => (
-                <span key={tag} className="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-full">
+                <span key={tag} className="px-2 py-1 md:px-3 text-xs md:text-sm bg-gray-100 text-gray-600 rounded-full">
                   {tag}
                 </span>
               ))}
@@ -146,7 +146,7 @@ async function PostData({ slug }: { slug: string }) {
 
         {/* Cover Image with SEO attributes */}
         {post.coverImage && (
-          <div className="mb-12">
+          <div className="mb-8 md:mb-12">
             <img
               src={post.coverImage}
               alt={post.coverImageAlt || post.title}
@@ -159,7 +159,7 @@ async function PostData({ slug }: { slug: string }) {
 
         {/* 文章内容 - 已净化 XSS */}
         <div
-          className="prose prose-lg max-w-none mb-12"
+          className="prose prose-base md:prose-lg max-w-none mb-8 md:mb-12"
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
         />
 
@@ -184,7 +184,7 @@ async function PostData({ slug }: { slug: string }) {
 export default function BlogPostPage({ params }: BlogPostPageProps) {
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto px-4 py-16">
+      <div className="max-w-4xl mx-auto px-4 py-10 md:py-16">
         <Suspense fallback={
           <div className="space-y-8">
             <div className="h-8 bg-gray-100 rounded animate-pulse w-3/4" />
