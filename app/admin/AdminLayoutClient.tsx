@@ -25,7 +25,11 @@ import {
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/products', label: 'Products', icon: Package },
+  { label: 'Products', icon: Package, children: [
+  { href: '/admin/products', label: 'All Products' },
+  { href: '/admin/products/edit/new', label: 'Add Product' },
+  { href: '/admin/reviews', label: 'Reviews' },
+] },
   { label: 'Posts', icon: FileText, children: [
   { href: '/admin/posts', label: 'All Posts' },
   { href: '/admin/blogs/edit/new', label: 'Add Post' },
@@ -34,7 +38,6 @@ const navItems = [
 ] },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/admin/payments', label: 'Payments', icon: CreditCard },
-  { href: '/admin/reviews', label: 'Reviews', icon: MessageSquare },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
