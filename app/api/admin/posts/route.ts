@@ -6,22 +6,38 @@ export const dynamic = 'force-dynamic';
 // GET /api/admin/posts — list all posts (including drafts)
 export async function GET() {
   try {
-    const posts = await prisma.post.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true, slug: true, title: true, excerpt: true,
-        coverImage: true, coverImageAlt: true, coverImageTitle: true,
-        category: true, tags: true,
-        published: true, likes: true, views: true,
-        metaTitle: true, metaDesc: true,
-        createdAt: true, updatedAt: true,
-        _count: { select: { comments: true } },
-      },
-    });
-    
-    console.log('Admin posts GET findMany:', posts.length, 'posts');
-    
-    return NextResponse.json(posts);
+    // Use raw query to avoid Prisma relation checks when comments table doesn't exist
+    const posts = await prisma.$queryRaw`
+      SELECT id, slug, title, excerpt, "coverImage", "coverImageAlt", "coverImageTitle",
+             category, tags, published, likes, views, "metaTitle", "metaDesc",
+             "createdAt", "updatedAt"
+      FROM posts
+      ORDER BY "createdAt" DESC
+    `;
+
+    // Normalize results to match Post interface
+    const normalized = Array.isArray(posts) ? posts.map((p: any) => ({
+      id: p.id,
+      slug: p.slug,
+      title: p.title,
+      excerpt: p.excerpt,
+      coverImage: p.coverImage,
+      coverImageAlt: p.coverImageAlt,
+      coverImageTitle: p.coverImageTitle,
+      category: p.category,
+      tags: p.tags || [],
+      published: p.published,
+      likes: p.likes || 0,
+      views: p.views || 0,
+      metaTitle: p.metaTitle,
+      metaDesc: p.metaDesc,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+    })) : [];
+
+    console.log('Admin posts GET:', normalized.length, 'posts');
+
+    return NextResponse.json(normalized);
   } catch (error: any) {
     console.error('Admin posts GET error:', error.message || error);
     return NextResponse.json(
