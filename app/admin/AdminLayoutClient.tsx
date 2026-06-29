@@ -25,7 +25,7 @@ import {
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/products', label: 'Products', icon: Package },
-  { href: '/admin/blogs', label: 'Blogs', icon: FileText },
+  { href: '/admin/blogs', label: 'Posts', icon: FileText },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/admin/payments', label: 'Payments', icon: CreditCard },
   { href: '/admin/reviews', label: 'Reviews', icon: MessageSquare },
