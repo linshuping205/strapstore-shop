@@ -29,16 +29,18 @@ export default function Header() {
   const router = useRouter();
 
   useEffect(() => {
-    // Cache settings in localStorage to avoid repeated API calls
+    // Cache settings in localStorage (short 30s to avoid stale data when admin updates)
     const cached = localStorage.getItem('site-settings');
     const cachedAt = localStorage.getItem('site-settings-at');
-    if (cached && cachedAt && Date.now() - Number(cachedAt) < 300_000) {
+    const invalidAt = localStorage.getItem('settings-invalidate');
+    const isInvalid = invalidAt && cachedAt && Number(invalidAt) > Number(cachedAt);
+    if (cached && cachedAt && !isInvalid && Date.now() - Number(cachedAt) < 30_000) {
       try {
         setSettings(JSON.parse(cached));
       } catch { /* ignore parse error */ }
     }
 
-    fetch('/api/settings', { cache: 'force-cache' })
+    fetch('/api/settings', { cache: 'no-store' })
       .then((res) => (res.ok ? res.json() : {}))
       .then((data) => {
         setSettings(data);
@@ -47,6 +49,26 @@ export default function Header() {
       })
       .catch(() => { /* ignore */ });
 
+    // Listen for settings changes from other tabs/admin
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'settings-invalidate') {
+        localStorage.removeItem('site-settings');
+        localStorage.removeItem('site-settings-at');
+        fetch('/api/settings', { cache: 'no-store' })
+          .then((res) => (res.ok ? res.json() : {}))
+          .then((data) => {
+            setSettings(data);
+            localStorage.setItem('site-settings', JSON.stringify(data));
+            localStorage.setItem('site-settings-at', String(Date.now()));
+          })
+          .catch(() => { /* ignore */ });
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  useEffect(() => {
     // Check cached guest status to skip repeated 401 requests
     const meGuest = localStorage.getItem('me-guest');
     const meGuestAt = localStorage.getItem('me-guest-at');

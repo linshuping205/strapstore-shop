@@ -65,6 +65,10 @@ export default function SettingsPage() {
       if (res.ok) {
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
+        // Invalidate all caches so other pages pick up new settings immediately
+        localStorage.setItem('site-settings', JSON.stringify(form));
+        localStorage.setItem('site-settings-at', String(Date.now()));
+        localStorage.setItem('settings-invalidate', String(Date.now()));
         // Reload from server to confirm
         await loadSettings();
       } else {
