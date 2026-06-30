@@ -5,6 +5,16 @@ export const dynamic = 'force-dynamic';
 
 const ADMIN_TOKEN = 'admin-secret-token-2024';
 
+interface PayoutAccount {
+  type: 'bank' | 'paypal';
+  accountHolder: string;
+  bankName?: string;
+  accountNumber?: string;
+  routingNumber?: string;
+  swiftCode?: string;
+  paypalEmail?: string;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('x-admin-auth');
@@ -67,6 +77,15 @@ export async function GET(request: NextRequest) {
 
     const availableBalance = Math.max(0, totalRevenue - withdrawnTotal);
 
+  // Load payout account
+  let payoutAccount: PayoutAccount | null = null;
+  try {
+    const payoutSetting = await prisma.settings.findUnique({ where: { key: 'payout_account' } });
+    if (payoutSetting) {
+      try { payoutAccount = JSON.parse(payoutSetting.value); } catch { /* ignore */ }
+    }
+  } catch { /* ignore */ }
+
     return NextResponse.json({
       success: true,
       data: orders.map((o) => ({
@@ -87,6 +106,7 @@ export async function GET(request: NextRequest) {
         cancelledCount: orders.filter((o) => o.status === 'CANCELLED').length,
       },
       withdrawalHistory,
+      payoutAccount,
     });
   } catch (error: any) {
     console.error('Admin payments GET error:', error?.message || error);
@@ -102,8 +122,31 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { id, status } = body;
 
+    // Save payout account configuration
+    if (body.payoutAccount) {
+      const account = body.payoutAccount;
+      if (!account.accountHolder?.trim()) {
+        return NextResponse.json({ success: false, error: 'Account holder name is required' }, { status: 400 });
+      }
+      if (account.type === 'bank') {
+        if (!account.bankName?.trim() || !account.accountNumber?.trim()) {
+          return NextResponse.json({ success: false, error: 'Bank name and account number are required' }, { status: 400 });
+        }
+      } else if (account.type === 'paypal') {
+        if (!account.paypalEmail?.trim() || !account.paypalEmail.includes('@')) {
+          return NextResponse.json({ success: false, error: 'Valid PayPal email is required' }, { status: 400 });
+        }
+      }
+      await prisma.settings.upsert({
+        where: { key: 'payout_account' },
+        update: { value: JSON.stringify(account) },
+        create: { key: 'payout_account', value: JSON.stringify(account) },
+      });
+      return NextResponse.json({ success: true, data: account });
+    }
+
+    const { id, status } = body;
     if (!id || !status) {
       return NextResponse.json({ success: false, error: 'id and status are required' }, { status: 400 });
     }
@@ -128,15 +171,19 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { amount, note } = body;
+    const { amount, note, payoutAccount } = body;
 
     if (!amount || typeof amount !== 'number' || amount <= 0) {
       return NextResponse.json({ success: false, error: 'Valid amount is required' }, { status: 400 });
     }
 
+    if (!payoutAccount || !payoutAccount.type || !payoutAccount.accountHolder?.trim()) {
+      return NextResponse.json({ success: false, error: 'Payout account is required. Please configure a payout account before withdrawing.' }, { status: 400 });
+    }
+
     // Get current withdrawn total
     let withdrawnTotal = 0;
-    let history: { date: string; amount: number; note: string }[] = [];
+    let history: { date: string; amount: number; note: string; accountType?: string; accountInfo?: string }[] = [];
 
     try {
       const withdrawnSetting = await prisma.settings.findUnique({ where: { key: 'withdrawn_total' } });
@@ -159,8 +206,13 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Insufficient balance' }, { status: 400 });
     }
 
+    const accountType = payoutAccount.type === 'paypal' ? 'PayPal' : 'Bank Transfer';
+    const accountInfo = payoutAccount.type === 'paypal'
+      ? payoutAccount.paypalEmail
+      : `${payoutAccount.bankName} - ${payoutAccount.accountNumber?.slice(-4).padStart(payoutAccount.accountNumber.length, '*') || '****'}`;
+
     const newWithdrawnTotal = withdrawnTotal + amount;
-    const newRecord = { date: new Date().toISOString(), amount, note: note || '' };
+    const newRecord = { date: new Date().toISOString(), amount, note: note || '', accountType, accountInfo };
     history.unshift(newRecord);
     // Keep only last 50 records
     if (history.length > 50) history = history.slice(0, 50);

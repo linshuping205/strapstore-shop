@@ -61,11 +61,24 @@ interface PaymentStats {
   cancelledCount: number;
 }
 
+interface PayoutAccount {
+  type: 'bank' | 'paypal';
+  accountHolder: string;
+  bankName?: string;
+  accountNumber?: string;
+  routingNumber?: string;
+  swiftCode?: string;
+  paypalEmail?: string;
+}
+
 interface WithdrawalRecord {
   date: string;
   amount: number;
   note: string;
+  accountType?: string;
+  accountInfo?: string;
 }
+
 
 const statusConfig: Record<string, { color: string; icon: React.ElementType; label: string }> = {
   PENDING: { color: 'bg-amber-50 text-amber-600 border-amber-100', icon: Clock, label: 'Pending' },
@@ -86,6 +99,12 @@ export default function PaymentsPage() {
   const [filter, setFilter] = useState<string>('All');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+
+  // Payout account
+  const [payoutAccount, setPayoutAccount] = useState<PayoutAccount | null>(null);
+  const [showPayoutForm, setShowPayoutForm] = useState(false);
+  const [payoutForm, setPayoutForm] = useState<PayoutAccount>({ type: 'bank', accountHolder: '' });
+  const [payoutSaving, setPayoutSaving] = useState(false);
 
   // Withdrawal modal
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
@@ -111,6 +130,10 @@ export default function PaymentsPage() {
         setOrders(data.data || []);
         setStats(data.stats || null);
         setWithdrawalHistory(data.withdrawalHistory || []);
+        if (data.payoutAccount) {
+          setPayoutAccount(data.payoutAccount);
+          setPayoutForm(data.payoutAccount);
+        }
       } else {
         setError(data.error || 'Failed to load payments');
       }
@@ -156,9 +179,56 @@ export default function PaymentsPage() {
     }
   };
 
+  const savePayoutAccount = async () => {
+    if (!payoutForm.accountHolder.trim()) {
+      alert('Account holder name is required');
+      return;
+    }
+    if (payoutForm.type === 'bank') {
+      if (!payoutForm.bankName?.trim() || !payoutForm.accountNumber?.trim()) {
+        alert('Bank name and account number are required');
+        return;
+      }
+    } else if (payoutForm.type === 'paypal') {
+      if (!payoutForm.paypalEmail?.trim() || !payoutForm.paypalEmail.includes('@')) {
+        alert('Valid PayPal email is required');
+        return;
+      }
+    }
+    setPayoutSaving(true);
+    try {
+      const token = localStorage.getItem('admin-auth');
+      const res = await fetch('/api/admin/payments', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-auth': token || '',
+        },
+        body: JSON.stringify({ payoutAccount: payoutForm }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPayoutAccount(payoutForm);
+        setShowPayoutForm(false);
+        fetchPayments();
+      } else {
+        alert(data.error || 'Failed to save payout account');
+      }
+    } catch (e) {
+      console.error('Save payout account error:', e);
+      alert('Network error');
+    } finally {
+      setPayoutSaving(false);
+    }
+  };
+
   const handleWithdraw = async (e: React.FormEvent) => {
     e.preventDefault();
     setWithdrawError('');
+    if (!payoutAccount) {
+      setWithdrawError('Please configure a payout account before withdrawing');
+      return;
+    }
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
       setWithdrawError('Please enter a valid amount');
@@ -178,7 +248,7 @@ export default function PaymentsPage() {
           'Content-Type': 'application/json',
           'x-admin-auth': token || '',
         },
-        body: JSON.stringify({ amount, note: withdrawNote }),
+        body: JSON.stringify({ amount, note: withdrawNote, payoutAccount }),
       });
       const data = await res.json();
       if (data.success) {
@@ -310,6 +380,133 @@ export default function PaymentsPage() {
         </div>
       )}
 
+      {/* Payout Account */}
+      <div className={`rounded-xl border p-5 mb-6 ${payoutAccount ? 'bg-white border-gray-100' : 'bg-amber-50 border-amber-100'}`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${payoutAccount ? 'bg-gray-50' : 'bg-amber-100'}`}>
+              <DollarSign className={`w-5 h-5 ${payoutAccount ? 'text-gray-600' : 'text-amber-600'}`} />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 text-sm">Payout Account</p>
+              {payoutAccount ? (
+                <p className="text-sm text-gray-500">
+                  {payoutAccount.type === 'paypal' ? 'PayPal' : payoutAccount.bankName} — {payoutAccount.accountHolder}
+                </p>
+              ) : (
+                <p className="text-sm text-amber-700">No payout account configured. Withdrawals will be blocked.</p>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={() => setShowPayoutForm(!showPayoutForm)}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${payoutAccount ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' : 'bg-amber-600 text-white hover:bg-amber-700'}`}
+          >
+            {payoutAccount ? 'Edit' : 'Configure'}
+          </button>
+        </div>
+
+        {/* Payout Account Form */}
+        {showPayoutForm && (
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Account Type</label>
+                <select
+                  value={payoutForm.type}
+                  onChange={(e) => setPayoutForm({ ...payoutForm, type: e.target.value as 'bank' | 'paypal' })}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
+                >
+                  <option value="bank">Bank Transfer</option>
+                  <option value="paypal">PayPal</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Account Holder Name</label>
+                <input
+                  type="text"
+                  value={payoutForm.accountHolder}
+                  onChange={(e) => setPayoutForm({ ...payoutForm, accountHolder: e.target.value })}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  placeholder="John Doe"
+                />
+              </div>
+              {payoutForm.type === 'bank' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
+                    <input
+                      type="text"
+                      value={payoutForm.bankName || ''}
+                      onChange={(e) => setPayoutForm({ ...payoutForm, bankName: e.target.value })}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      placeholder="Chase Bank"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
+                    <input
+                      type="text"
+                      value={payoutForm.accountNumber || ''}
+                      onChange={(e) => setPayoutForm({ ...payoutForm, accountNumber: e.target.value })}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      placeholder="1234567890"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Routing Number (optional)</label>
+                    <input
+                      type="text"
+                      value={payoutForm.routingNumber || ''}
+                      onChange={(e) => setPayoutForm({ ...payoutForm, routingNumber: e.target.value })}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      placeholder="021000021"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">SWIFT / BIC (optional)</label>
+                    <input
+                      type="text"
+                      value={payoutForm.swiftCode || ''}
+                      onChange={(e) => setPayoutForm({ ...payoutForm, swiftCode: e.target.value })}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      placeholder="CHASUS33"
+                    />
+                  </div>
+                </>
+              )}
+              {payoutForm.type === 'paypal' && (
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">PayPal Email</label>
+                  <input
+                    type="email"
+                    value={payoutForm.paypalEmail || ''}
+                    onChange={(e) => setPayoutForm({ ...payoutForm, paypalEmail: e.target.value })}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    placeholder="hello@example.com"
+                  />
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => { setShowPayoutForm(false); if (payoutAccount) setPayoutForm(payoutAccount); }}
+                className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={savePayoutAccount}
+                disabled={payoutSaving}
+                className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors disabled:opacity-50"
+              >
+                {payoutSaving ? 'Saving...' : 'Save Payout Account'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Withdrawal action bar */}
       {stats && stats.availableBalance > 0 && (
         <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 mb-6 flex items-center justify-between">
@@ -336,9 +533,29 @@ export default function PaymentsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-1">Withdraw Funds</h2>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-gray-500 mb-4">
               Available balance: ${stats ? formatPrice(stats.availableBalance) : '0.00'}
             </p>
+            {/* Payout account preview */}
+            {payoutAccount && (
+              <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                <p className="text-xs text-gray-500 mb-1">Transfer to</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {payoutAccount.type === 'paypal' ? `PayPal — ${payoutAccount.paypalEmail}` : `${payoutAccount.bankName} — ${payoutAccount.accountHolder}`}
+                </p>
+              </div>
+            )}
+            {!payoutAccount && (
+              <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg mb-4">
+                Please configure a payout account before withdrawing.
+                <button
+                  onClick={() => { setShowWithdrawModal(false); setShowPayoutForm(true); }}
+                  className="ml-2 underline font-medium"
+                >
+                  Configure now
+                </button>
+              </div>
+            )}
             <form onSubmit={handleWithdraw} className="space-y-4">
               {withdrawError && (
                 <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg">{withdrawError}</div>
@@ -367,7 +584,7 @@ export default function PaymentsPage() {
                   value={withdrawNote}
                   onChange={(e) => setWithdrawNote(e.target.value)}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  placeholder="Bank transfer, PayPal, etc."
+                  placeholder="Transfer reference, invoice number, etc."
                 />
               </div>
               <div className="flex gap-3 pt-2">
@@ -380,7 +597,7 @@ export default function PaymentsPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={withdrawLoading}
+                  disabled={withdrawLoading || !payoutAccount}
                   className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50"
                 >
                   {withdrawLoading ? 'Processing...' : 'Confirm Withdraw'}
@@ -404,6 +621,7 @@ export default function PaymentsPage() {
                 <tr>
                   <th className="text-left px-5 py-3 font-medium text-gray-600">Date</th>
                   <th className="text-right px-5 py-3 font-medium text-gray-600">Amount</th>
+                  <th className="text-left px-5 py-3 font-medium text-gray-600">Account</th>
                   <th className="text-left px-5 py-3 font-medium text-gray-600">Note</th>
                 </tr>
               </thead>
@@ -421,6 +639,9 @@ export default function PaymentsPage() {
                     </td>
                     <td className="px-5 py-3 text-right font-semibold text-emerald-700">
                       ${formatPrice(w.amount)}
+                    </td>
+                    <td className="px-5 py-3 text-gray-500">
+                      {w.accountType || '-'} {w.accountInfo ? `— ${w.accountInfo}` : ''}
                     </td>
                     <td className="px-5 py-3 text-gray-500">{w.note || '-'}</td>
                   </tr>
