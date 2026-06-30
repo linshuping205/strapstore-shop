@@ -200,7 +200,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
               <div className="grid grid-cols-4 gap-3">
                 {serializedProduct.images.slice(0, 4).map((img, i) => (
                   <div key={i} className="aspect-square bg-gray-50 rounded-lg overflow-hidden relative">
-                    <Image src={img} alt={`${serializedProduct.name} ${i + 1}`} fill className="object-cover" sizes="120px" />
+                    <Image src={img} alt={`${serializedProduct.name} ${i + 1}`} fill className="object-cover" sizes="120px" loading="lazy" />
                   </div>
                 ))}
               </div>

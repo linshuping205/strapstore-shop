@@ -38,7 +38,27 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
   const fetchReviews = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/products/${productId}/reviews`);
+      // Check localStorage cache
+      const cacheKey = `product-reviews-${productId}`;
+      const cached = localStorage.getItem(cacheKey);
+      const cachedAt = localStorage.getItem(`${cacheKey}-at`);
+      if (cached && cachedAt && Date.now() - Number(cachedAt) < 300_000) {
+        try {
+          const data = JSON.parse(cached);
+          if (data.success) {
+            setReviews(data.data || []);
+            setTotal(data.pagination?.total || 0);
+            if (data.data && data.data.length > 0) {
+              const avg = data.data.reduce((sum: number, r: Review) => sum + r.rating, 0) / data.data.length;
+              setAvgRating(Math.round(avg * 10) / 10);
+            }
+            setLoading(false);
+            return;
+          }
+        } catch { /* ignore parse error */ }
+      }
+
+      const res = await fetch(`/api/products/${productId}/reviews`, { cache: 'force-cache' });
       const data = await res.json();
       if (data.success) {
         setReviews(data.data || []);
@@ -47,6 +67,8 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
           const avg = data.data.reduce((sum: number, r: Review) => sum + r.rating, 0) / data.data.length;
           setAvgRating(Math.round(avg * 10) / 10);
         }
+        localStorage.setItem(cacheKey, JSON.stringify(data));
+        localStorage.setItem(`${cacheKey}-at`, String(Date.now()));
       }
     } catch (e) {
       console.error('Failed to fetch reviews:', e);
