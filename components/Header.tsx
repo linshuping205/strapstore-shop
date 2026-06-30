@@ -47,13 +47,31 @@ export default function Header() {
       })
       .catch(() => { /* ignore */ });
 
-    fetch('/api/auth/me', { cache: 'force-cache' })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.data?.user) setUser(data.data.user);
-      })
-      .catch(() => { /* ignore */ })
-      .finally(() => setLoadingUser(false));
+    // Check cached guest status to skip repeated 401 requests
+    const meGuest = localStorage.getItem('me-guest');
+    const meGuestAt = localStorage.getItem('me-guest-at');
+    if (meGuest && meGuestAt && Date.now() - Number(meGuestAt) < 300_000) {
+      setLoadingUser(false);
+    } else {
+      fetch('/api/auth/me', { cache: 'force-cache' })
+        .then((res) => {
+          if (res.status === 401) {
+            // Cache guest status to avoid repeated 401 requests
+            localStorage.setItem('me-guest', '1');
+            localStorage.setItem('me-guest-at', String(Date.now()));
+            return null;
+          }
+          // Clear guest cache on successful login
+          localStorage.removeItem('me-guest');
+          localStorage.removeItem('me-guest-at');
+          return res.ok ? res.json() : null;
+        })
+        .then((data) => {
+          if (data?.data?.user) setUser(data.data.user);
+        })
+        .catch(() => { /* ignore */ })
+        .finally(() => setLoadingUser(false));
+    }
   }, []);
 
   const handleLogout = async () => {
