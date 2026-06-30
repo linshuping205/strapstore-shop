@@ -1,12 +1,31 @@
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { successResponse, errorResponse } from '@/lib/api';
+import { NextResponse } from 'next/server';
+
+// Cache for me endpoint (per-instance, user-specific key)
+interface UserCacheEntry {
+  data: any;
+  expiresAt: number;
+}
+const userCache = new Map<string, UserCacheEntry>();
+const CACHE_TTL_MS = 300_000; // 5 minutes
 
 export async function GET() {
   try {
     const authUser = await getCurrentUser();
     if (!authUser) {
       return errorResponse('Not authenticated', 401, 'UNAUTHORIZED');
+    }
+
+    // Check cache for this user
+    const cached = userCache.get(authUser.userId);
+    if (cached && Date.now() < cached.expiresAt) {
+      return NextResponse.json({ success: true, data: cached.data }, {
+        headers: {
+          'Cache-Control': 'private, max-age=300, stale-while-revalidate=60',
+        },
+      });
     }
 
     const user = await prisma.user.findUnique({
@@ -29,7 +48,15 @@ export async function GET() {
     if (!user) {
       return errorResponse('User not found', 404, 'USER_NOT_FOUND');
     }
-    return successResponse({ user });
+
+    // Populate cache
+    userCache.set(authUser.userId, { data: { user }, expiresAt: Date.now() + CACHE_TTL_MS });
+
+    return NextResponse.json({ success: true, data: { user } }, {
+      headers: {
+        'Cache-Control': 'private, max-age=300, stale-while-revalidate=60',
+      },
+    });
   } catch (error: any) {
     console.error('Get user error:', error);
     return errorResponse(error.message || 'Failed to get user', 500);
@@ -72,6 +99,10 @@ export async function PATCH(request: Request) {
         createdAt: true,
       },
     });
+
+    // Invalidate cache after update
+    userCache.delete(authUser.userId);
+
     return successResponse({ user });
   } catch (error: any) {
     console.error('Update user error:', error);

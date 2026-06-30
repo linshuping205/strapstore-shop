@@ -33,6 +33,36 @@ const nextConfig = {
           { key: 'Cache-Control', value: 'public, s-maxage=60, stale-while-revalidate=300' },
         ],
       },
+      {
+        source: '/api/settings',
+        headers: [
+          { key: 'Cache-Control', value: 'public, s-maxage=300, stale-while-revalidate=60' },
+        ],
+      },
+      {
+        source: '/api/auth/me',
+        headers: [
+          { key: 'Cache-Control', value: 'private, max-age=300, stale-while-revalidate=60' },
+        ],
+      },
+      {
+        source: '/api/admin/posts',
+        headers: [
+          { key: 'Cache-Control', value: 'private, max-age=60, stale-while-revalidate=300' },
+        ],
+      },
+      {
+        source: '/api/admin/products',
+        headers: [
+          { key: 'Cache-Control', value: 'private, max-age=60, stale-while-revalidate=300' },
+        ],
+      },
+      {
+        source: '/api/admin/orders',
+        headers: [
+          { key: 'Cache-Control', value: 'private, max-age=60, stale-while-revalidate=300' },
+        ],
+      },
     ];
   },
 };

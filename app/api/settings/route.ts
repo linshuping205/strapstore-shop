@@ -3,6 +3,11 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
+// In-memory cache for settings (suitable for serverless, per-instance)
+let cachedSettings: Record<string, string> | null = null;
+let cacheExpiresAt = 0;
+const CACHE_TTL_MS = 300_000; // 5 minutes
+
 async function ensureSettingsTable() {
   try {
     await prisma.$queryRaw`SELECT 1 FROM "settings" LIMIT 1`;
@@ -24,13 +29,31 @@ async function ensureSettingsTable() {
 
 export async function GET() {
   try {
+    // Serve from cache if still valid
+    if (cachedSettings && Date.now() < cacheExpiresAt) {
+      return NextResponse.json(cachedSettings, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
+        },
+      });
+    }
+
     await ensureSettingsTable();
     const settings = await prisma.settings.findMany();
     const result: Record<string, string> = {};
     settings.forEach((s) => {
       result[s.key] = s.value;
     });
-    return NextResponse.json(result);
+
+    // Update cache
+    cachedSettings = result;
+    cacheExpiresAt = Date.now() + CACHE_TTL_MS;
+
+    return NextResponse.json(result, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
+      },
+    });
   } catch (error: any) {
     console.error('Settings GET error:', error);
     return NextResponse.json({ error: error.message || 'Failed to fetch settings' }, { status: 500 });
@@ -42,7 +65,7 @@ export async function PUT(request: NextRequest) {
     await ensureSettingsTable();
     const body = await request.json();
     const keys = Object.keys(body);
-    
+
     await prisma.$transaction(
       keys.map((key) =>
         prisma.settings.upsert({
@@ -52,7 +75,11 @@ export async function PUT(request: NextRequest) {
         })
       )
     );
-    
+
+    // Invalidate cache after update
+    cachedSettings = null;
+    cacheExpiresAt = 0;
+
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Settings PUT error:', error);
