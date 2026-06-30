@@ -23,7 +23,7 @@ export default function SettingsPage() {
   const loadSettings = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/settings');
+      const res = await fetch('/api/settings', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setForm({
@@ -65,6 +65,8 @@ export default function SettingsPage() {
       if (res.ok) {
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
+        // Reload from server to confirm
+        await loadSettings();
       } else {
         const data = await res.json().catch(() => ({}));
         alert(data.error || 'Failed to save settings');
