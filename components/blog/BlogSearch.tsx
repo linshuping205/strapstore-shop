@@ -14,11 +14,29 @@ export default function BlogList() {
   const fetchPosts = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/posts?page=${currentPage}`);
+      // Check client cache for this page
+      const cacheKey = `blog-posts-page-${currentPage}`;
+      const cached = localStorage.getItem(cacheKey);
+      const cachedAt = localStorage.getItem(`${cacheKey}-at`);
+      if (cached && cachedAt && Date.now() - Number(cachedAt) < 300_000) {
+        try {
+          const data = JSON.parse(cached);
+          if (data.success) {
+            setPosts(data.data);
+            setPagination(data.pagination);
+            setLoading(false);
+            // Still refresh in background
+          }
+        } catch { /* ignore parse error */ }
+      }
+
+      const res = await fetch(`/api/posts?page=${currentPage}`, { cache: 'force-cache' });
       const data = await res.json();
       if (data.success) {
         setPosts(data.data);
         setPagination(data.pagination);
+        localStorage.setItem(cacheKey, JSON.stringify(data));
+        localStorage.setItem(`${cacheKey}-at`, String(Date.now()));
       }
     } catch (e) {
       console.error('Failed to fetch posts:', e);
