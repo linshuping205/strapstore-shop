@@ -21,6 +21,7 @@ import {
   ArrowRight,
   AlertCircle,
   CreditCard,
+  Tag,
 } from 'lucide-react';
 
 const navItems = [
@@ -38,6 +39,7 @@ const navItems = [
 ] },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/admin/payments', label: 'Payments', icon: CreditCard },
+  { href: '/admin/coupons', label: 'Coupons', icon: Tag },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];

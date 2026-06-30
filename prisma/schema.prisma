@@ -45,6 +45,8 @@ model Order {
   total         Decimal     @db.Decimal(10, 2)
   status        OrderStatus @default(PENDING)
   stripeSessionId String?   @unique
+  discount      Decimal? @db.Decimal(10, 2)
+  couponCode    String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   items         OrderItem[]
@@ -152,6 +154,24 @@ enum ReviewStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+model Coupon {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  type        String   // 'percentage' or 'fixed'
+  value       Decimal  @db.Decimal(10, 2)
+  minAmount   Decimal? @db.Decimal(10, 2)
+  maxDiscount Decimal? @db.Decimal(10, 2)
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+  maxUses     Int      @default(0)
+  usedCount   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("coupons")
 }
 
 model User {

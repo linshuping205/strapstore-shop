@@ -146,7 +146,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: true, data: account });
     }
 
-    const { id, status } = body;
+    const { id, status, trackingNumber } = body;
     if (!id || !status) {
       return NextResponse.json({ success: false, error: 'id and status are required' }, { status: 400 });
     }
@@ -155,6 +155,14 @@ export async function PATCH(request: NextRequest) {
       where: { id },
       data: { status },
     });
+
+    // Send shipping notification when order is shipped
+    if (status === 'SHIPPED' && order.email) {
+      try {
+        const { sendShippingNotification } = await import('@/lib/email');
+        await sendShippingNotification(order.email, order.id, Number(order.total), trackingNumber);
+      } catch (e) { /* email may fail silently */ }
+    }
 
     return NextResponse.json({ success: true, data: order });
   } catch (error: any) {

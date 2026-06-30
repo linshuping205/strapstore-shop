@@ -4,7 +4,7 @@ import { useState, FormEvent } from 'react';
 import { useCart } from '@/lib/store';
 import { loadStripe } from '@stripe/stripe-js';
 import Link from 'next/link';
-import { ShoppingBag, CreditCard, ArrowLeft, Loader2 } from 'lucide-react';
+import { ShoppingBag, CreditCard, ArrowLeft, Loader2, Tag, X, Check } from 'lucide-react';
 
 function getStripe() {
   const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
@@ -13,8 +13,11 @@ function getStripe() {
 }
 
 export default function CheckoutPage() {
-  const { items, total, clearCart } = useCart();
+  const { items, total, coupon, setCoupon, finalTotal, clearCart } = useCart();
   const [loading, setLoading] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
 
   const [form, setForm] = useState({
     name: '',
@@ -24,6 +27,36 @@ export default function CheckoutPage() {
     country: '',
     postalCode: '',
   });
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    setCouponError('');
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode, total: total() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCoupon(data.data);
+        setCouponCode('');
+      } else {
+        setCouponError(data.error || 'Invalid coupon');
+      }
+    } catch {
+      setCouponError('Network error');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setCoupon(null);
+    setCouponError('');
+    setCouponCode('');
+  };
 
   const handleCheckout = async (e: FormEvent) => {
     e.preventDefault();
@@ -43,6 +76,8 @@ export default function CheckoutPage() {
           image: i.image,
         })),
         ...form,
+        couponCode: coupon?.code || null,
+        discount: coupon?.discount || null,
       }),
     });
 
@@ -166,7 +201,7 @@ export default function CheckoutPage() {
                   ) : (
                     <>
                       <CreditCard size={18} />
-                      Pay ${total().toFixed(2)}
+                      Pay ${finalTotal().toFixed(2)}
                     </>
                   )}
                 </button>
@@ -194,18 +229,67 @@ export default function CheckoutPage() {
                   </div>
                 ))}
               </div>
+
+              {/* Coupon Input */}
+              <div className="border-t border-gray-100 pt-4 mb-4">
+                {coupon ? (
+                  <div className="flex items-center justify-between bg-green-50 rounded-lg p-3">
+                    <div className="flex items-center gap-2">
+                      <Check size={16} className="text-green-600" />
+                      <div>
+                        <p className="text-sm font-medium text-green-800">{coupon.code}</p>
+                        <p className="text-xs text-green-600">
+                          -${coupon.discount.toFixed(2)} {coupon.type === 'percentage' ? `(${coupon.value}%)` : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <button onClick={removeCoupon} className="text-green-700 hover:text-green-900">
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), applyCoupon())}
+                      placeholder="Coupon code"
+                      className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400 uppercase"
+                    />
+                    <button
+                      type="button"
+                      onClick={applyCoupon}
+                      disabled={couponLoading || !couponCode.trim()}
+                      className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors disabled:opacity-50"
+                    >
+                      {couponLoading ? <Loader2 size={14} className="animate-spin" /> : <Tag size={14} />}
+                    </button>
+                  </div>
+                )}
+                {couponError && (
+                  <p className="text-xs text-red-600 mt-1.5">{couponError}</p>
+                )}
+              </div>
+
               <div className="border-t border-gray-100 pt-4">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-gray-500">Subtotal</span>
                   <span className="text-sm font-medium">${total().toFixed(2)}</span>
                 </div>
+                {coupon && (
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-green-600">Discount</span>
+                    <span className="text-sm font-medium text-green-600">-${coupon.discount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-sm text-gray-500">Shipping</span>
                   <span className="text-sm font-medium">Free</span>
                 </div>
                 <div className="flex justify-between items-center text-lg font-bold">
                   <span>Total</span>
-                  <span>${total().toFixed(2)}</span>
+                  <span>${finalTotal().toFixed(2)}</span>
                 </div>
               </div>
             </div>

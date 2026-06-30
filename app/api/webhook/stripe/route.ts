@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { sendOrderConfirmation } from '@/lib/email';
 
 export const runtime = 'nodejs';
 
@@ -48,30 +49,37 @@ export async function POST(request: Request) {
     const country = metadata.country || '';
     const postalCode = metadata.postalCode || '';
     const total = (session.amount_total || 0) / 100;
+    const couponCode = metadata.couponCode || '';
+    const discount = metadata.discount ? parseFloat(metadata.discount) : 0;
 
     try {
+      let orderId = '';
       await prisma.$transaction(async (tx) => {
         // Create order
-        await tx.order.create({
-          data: {
-            email,
-            name,
-            address,
-            city,
-            country,
-            postalCode,
-            total,
-            status: 'PAID',
-            stripeSessionId: session.id,
-            items: {
-              create: items.map((item: any) => ({
-                productId: item.id,
-                quantity: item.quantity,
-                price: item.price,
-              })),
-            },
+        const orderData: any = {
+          email,
+          name,
+          address,
+          city,
+          country,
+          postalCode,
+          total,
+          status: 'PAID',
+          stripeSessionId: session.id,
+          items: {
+            create: items.map((item: any) => ({
+              productId: item.id,
+              quantity: item.quantity,
+              price: item.price,
+            })),
           },
-        });
+        };
+        if (couponCode) {
+          orderData.couponCode = couponCode;
+          orderData.discount = discount;
+        }
+        const order = await tx.order.create({ data: orderData });
+        orderId = order.id;
 
         // Deduct inventory
         for (const item of items) {
@@ -80,9 +88,27 @@ export async function POST(request: Request) {
             data: { stock: { decrement: item.quantity } },
           });
         }
+
+        // Increment coupon usage count
+        if (couponCode) {
+          try {
+            await tx.coupon.updateMany({
+              where: { code: couponCode },
+              data: { usedCount: { increment: 1 } },
+            });
+          } catch { /* coupon table may not exist */ }
+        }
       });
 
-      console.log('Order created from Stripe webhook:', session.id);
+      console.log('Order created from Stripe webhook:', session.id, 'Order ID:', orderId);
+
+      // Send order confirmation email
+      await sendOrderConfirmation(email, orderId, total, items.map((i: any) => ({
+        name: i.name || 'Product',
+        quantity: i.quantity,
+        price: i.price,
+      })));
+
     } catch (err: any) {
       console.error('Failed to create order from webhook:', err);
     }

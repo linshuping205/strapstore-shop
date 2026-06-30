@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import ProductCard from '@/components/ProductCard'
+import ProductsFilter from '@/components/ProductsFilter'
 import { Package } from 'lucide-react'
 import type { Product } from '@/types'
 import { serializeProducts } from '@/lib/utils'
@@ -45,7 +46,7 @@ export default async function ProductsPage() {
     const rawProducts = await prisma.product.findMany({
       where: { isActive: true },
       orderBy: { createdAt: 'desc' },
-      take: 200, // cap at 200 to prevent excessive SSR payload
+      take: 200,
     })
     products = serializeProducts(rawProducts)
   } catch {
@@ -69,11 +70,7 @@ export default async function ProductsPage() {
             <p className="text-gray-400 text-sm mt-2">Visit admin panel to add products.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <ProductsFilter products={products} />
         )}
       </div>
     </div>

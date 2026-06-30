@@ -11,9 +11,30 @@ export async function POST(req: Request) {
     }
     const stripe = new Stripe(stripeKey, { apiVersion: '2024-04-10' });
 
-    const { items, email, name, address, city, country, postalCode } = await req.json();
+    const { items, email, name, address, city, country, postalCode, couponCode, discount } = await req.json();
 
-    const lineItems = items.map((item: any) => ({
+    const originalTotal = items.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
+    const discountAmount = discount || 0;
+    const finalTotal = Math.max(0, originalTotal - discountAmount);
+
+    // Proportionally distribute discount across items
+    let adjustedItems = items;
+    if (discountAmount > 0 && originalTotal > 0) {
+      const ratio = finalTotal / originalTotal;
+      adjustedItems = items.map((item: any) => ({
+        ...item,
+        price: Math.round(item.price * ratio * 100) / 100,
+      }));
+      // Fix rounding: adjust last item to match exact final total
+      const adjustedTotal = adjustedItems.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
+      const diff = finalTotal - adjustedTotal;
+      if (Math.abs(diff) > 0.001 && adjustedItems.length > 0) {
+        const last = adjustedItems[adjustedItems.length - 1];
+        last.price = Math.round((last.price + diff / last.quantity) * 100) / 100;
+      }
+    }
+
+    const lineItems = adjustedItems.map((item: any) => ({
       price_data: {
         currency: 'usd',
         product_data: {
@@ -48,6 +69,9 @@ export async function POST(req: Request) {
         city: city || '',
         country: country || '',
         postalCode: postalCode || '',
+        couponCode: couponCode || '',
+        discount: String(discountAmount),
+        originalTotal: String(originalTotal),
       },
     });
 

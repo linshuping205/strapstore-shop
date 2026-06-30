@@ -12,18 +12,22 @@ export interface CartItem {
 
 interface CartStore {
   items: CartItem[];
+  coupon: { code: string; discount: number; type: string; value: number } | null;
   addItem: (item: CartItem) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   total: () => number;
   itemCount: () => number;
+  setCoupon: (coupon: { code: string; discount: number; type: string; value: number } | null) => void;
+  finalTotal: () => number;
 }
 
 export const useCart = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
+      coupon: null,
       addItem: (item) => {
         const existing = get().items.find((i) => i.id === item.id);
         if (existing) {
@@ -46,9 +50,16 @@ export const useCart = create<CartStore>()(
           });
         }
       },
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], coupon: null }),
       total: () => get().items.reduce((sum, item) => sum + item.price * item.quantity, 0),
       itemCount: () => get().items.reduce((sum, item) => sum + item.quantity, 0),
+      setCoupon: (coupon) => set({ coupon }),
+      finalTotal: () => {
+        const total = get().total();
+        const coupon = get().coupon;
+        if (!coupon) return total;
+        return Math.max(0, total - coupon.discount);
+      },
     }),
     { name: 'cart-storage' }
   )
