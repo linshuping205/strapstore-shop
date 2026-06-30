@@ -1,11 +1,48 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 
 export default function HeroBanner() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+
+  useEffect(() => {
+    // Defer video loading until after LCP (idle time or 2s fallback)
+    let timer: ReturnType<typeof setTimeout> | number;
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      timer = (window as any).requestIdleCallback(() => {
+        if (videoRef.current) {
+          videoRef.current.load();
+        }
+      }, { timeout: 3000 });
+    } else {
+      timer = setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.load();
+        }
+      }, 2000);
+    }
+
+    return () => {
+      if (typeof timer === 'number') {
+        clearTimeout(timer);
+      } else {
+        clearTimeout(timer as any);
+      }
+      if (typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+        (window as any).cancelIdleCallback?.(timer);
+      }
+    };
+  }, []);
+
+  const handleCanPlay = () => {
+    setVideoLoaded(true);
+    if (videoRef.current && isPlaying) {
+      videoRef.current.play().catch(() => { /* auto-play blocked */ });
+    }
+  };
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -31,15 +68,15 @@ export default function HeroBanner() {
       <div className="absolute top-0 left-10 right-10 bottom-0 rounded overflow-hidden bg-gray-900">
         <video
           ref={videoRef}
-          autoPlay
           muted
           loop
           playsInline
-          preload="auto"
-          //poster="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=1920&q=80"
+          preload="none"
+          poster="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=1920&q=80&auto=format"
+          onCanPlay={handleCanPlay}
           className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto -translate-x-1/2 -translate-y-1/2 object-cover opacity-90"
         >
-          <source src="https://cdn.pixabay.com/video/2024/03/18/204582-925146042_large.mp4" type="video/mp4" />
+          <source src="https://cdn.pixabay.com/video/2024/03/18/204582-925146042_medium.mp4" type="video/mp4" />
         </video>
       </div>
 
