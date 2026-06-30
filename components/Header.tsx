@@ -105,9 +105,9 @@ export default function Header() {
           {/* 中间：Logo */}
           <div className="flex-shrink-0 text-center">
             <Link href="/" className="block">
-              <h1 className="text-lg md:text-xl font-serif tracking-[0.2em] font-semibold">
+              <span className="text-lg md:text-xl font-serif tracking-[0.2em] font-semibold">
                 {siteTitle}
-              </h1>
+              </span>
               <p className="text-[10px] md:text-xs tracking-[0.15em] text-gray-500 mt-0.5">
                 {tagline}
               </p>

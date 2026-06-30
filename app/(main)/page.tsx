@@ -52,7 +52,9 @@ export async function generateMetadata() {
   const siteTitle = settings.siteTitle || 'MasterStrap';
   const tagline = settings.tagline || 'Premium Watch Straps & Bands';
   return {
-    title: `${siteTitle} | ${tagline}`,
+    title: {
+      absolute: `${siteTitle} | ${tagline}`,
+    },
     description: `Discover premium handcrafted watch straps at ${siteTitle}. Italian leather, rubber sport bands, woven nylon, and exotic calfskin straps. Free worldwide shipping.`,
     keywords: ['watch strap', 'watch band', 'leather strap', 'rubber strap', 'nylon strap', 'watch accessories', 'luxury watch band', 'handcrafted strap'],
     openGraph: {
