@@ -60,9 +60,21 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   const [iconError, setIconError] = useState(false);
 
   useEffect(() => {
-    fetch('/api/settings')
+    const cached = localStorage.getItem('admin-site-settings');
+    const cachedAt = localStorage.getItem('admin-site-settings-at');
+    if (cached && cachedAt && Date.now() - Number(cachedAt) < 300_000) {
+      try {
+        setSettings(JSON.parse(cached));
+      } catch { /* ignore */ }
+    }
+
+    fetch('/api/settings', { cache: 'force-cache' })
       .then((r) => (r.ok ? r.json() : {}))
-      .then((data) => setSettings(data))
+      .then((data) => {
+        setSettings(data);
+        localStorage.setItem('admin-site-settings', JSON.stringify(data));
+        localStorage.setItem('admin-site-settings-at', String(Date.now()));
+      })
       .catch(() => {});
   }, []);
 

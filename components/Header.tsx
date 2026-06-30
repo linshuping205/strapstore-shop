@@ -29,13 +29,26 @@ export default function Header() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch('/api/settings')
-      .then((res) => res.ok ? res.json() : {})
-      .then((data) => setSettings(data))
+    // Cache settings in localStorage to avoid repeated API calls
+    const cached = localStorage.getItem('site-settings');
+    const cachedAt = localStorage.getItem('site-settings-at');
+    if (cached && cachedAt && Date.now() - Number(cachedAt) < 300_000) {
+      try {
+        setSettings(JSON.parse(cached));
+      } catch { /* ignore parse error */ }
+    }
+
+    fetch('/api/settings', { cache: 'force-cache' })
+      .then((res) => (res.ok ? res.json() : {}))
+      .then((data) => {
+        setSettings(data);
+        localStorage.setItem('site-settings', JSON.stringify(data));
+        localStorage.setItem('site-settings-at', String(Date.now()));
+      })
       .catch(() => { /* ignore */ });
 
-    fetch('/api/auth/me')
-      .then((res) => res.ok ? res.json() : null)
+    fetch('/api/auth/me', { cache: 'force-cache' })
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.data?.user) setUser(data.data.user);
       })

@@ -30,7 +30,7 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    fetch('/api/auth/me')
+    fetch('/api/auth/me', { cache: 'force-cache' })
       .then((res) => {
         if (!res.ok) {
           if (res.status === 401) router.push('/login');
