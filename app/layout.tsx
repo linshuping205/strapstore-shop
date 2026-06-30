@@ -47,7 +47,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://your-domain.com'),
     title: {
       default: `${siteTitle} | ${tagline}`,
-      template: `%s | ${siteTitle}`,
+      template: `%s`,
     },
     description: tagline,
     keywords: ['watch strap', 'watch band', 'leather strap', 'rubber strap', 'metal bracelet', 'luxury watch accessories'],
