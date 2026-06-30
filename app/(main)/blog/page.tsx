@@ -27,6 +27,8 @@ export async function generateMetadata() {
   };
 }
 
+export const revalidate = 60; // ISR: re-generate every 60 seconds
+
 export default function BlogPage() {
   return (
     <div className="min-h-screen bg-white">

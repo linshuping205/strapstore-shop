@@ -5,14 +5,13 @@ import ProductCard from '@/components/ProductCard';
 import HeroBanner from '@/components/HeroBanner';
 import Craftsmanship from '@/components/Craftsmanship';
 import Testimonials from '@/components/Testimonials';
+import { prisma } from '@/lib/prisma';
 import { serializeProducts, serializePosts, formatPrice, APP_NAME } from '@/lib/utils';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 60; // ISR: re-generate every 60 seconds
 
 async function getFeaturedProducts() {
   try {
-    const { prisma } = await import('@/lib/prisma');
     const products = await prisma.product.findMany({
       where: { isActive: true },
       take: 8,
@@ -27,7 +26,6 @@ async function getFeaturedProducts() {
 
 async function getLatestPosts() {
   try {
-    const { prisma } = await import('@/lib/prisma');
     const posts = await prisma.post.findMany({
       where: { published: true },
       orderBy: { createdAt: 'desc' },

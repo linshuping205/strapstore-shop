@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { errorResponse, successResponse, handlePrismaError } from '@/lib/api';
+import { rateLimit, getRateLimitInfo, tooManyRequestsResponse } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const ip = getClientIp(request);
+  if (!rateLimit(ip, 60, 60000)) {
+    const info = getRateLimitInfo(ip, 60, 60000);
+    return tooManyRequestsResponse(info.resetAt);
+  }
+
   try {
     const products = await prisma.product.findMany({
       orderBy: { createdAt: 'desc' },
+      take: 200, // cap to prevent excessive payload
     });
     return NextResponse.json(products);
   } catch {
@@ -16,6 +25,12 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  if (!rateLimit(ip, 10, 60000)) {
+    const info = getRateLimitInfo(ip, 10, 60000);
+    return tooManyRequestsResponse(info.resetAt);
+  }
+
   try {
     const body = await request.json();
 

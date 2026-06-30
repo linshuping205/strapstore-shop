@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getClientIp, hashIp } from '@/lib/utils';
+import { rateLimit, getRateLimitInfo, tooManyRequestsResponse } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,8 +12,14 @@ export async function POST(
   try {
     const postId = params.id;
 
-    // Get IP address and hash it
+    // Rate limit: 5 likes per minute per IP
     const ip = getClientIp(request);
+    if (!rateLimit(ip, 5, 60000)) {
+      const info = getRateLimitInfo(ip, 5, 60000);
+      return tooManyRequestsResponse(info.resetAt);
+    }
+
+    // Get IP address and hash it
     const ipHash = hashIp(ip);
 
     // Check if already liked

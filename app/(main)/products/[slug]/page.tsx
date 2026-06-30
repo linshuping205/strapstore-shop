@@ -2,13 +2,71 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
+import { Metadata } from 'next';
 import AddToCartButton from './AddToCartButton';
 import ProductReviews from '@/components/products/ProductReviews';
 import { ArrowLeft, Truck, Shield, RotateCcw, Star, Package } from 'lucide-react';
 import { formatPrice, serializeProduct, serializeProducts } from '@/lib/utils';
 import type { Product } from '@/types';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60; // ISR: re-generate every 60 seconds
+
+async function getSettings() {
+  try {
+    const s = await prisma.settings.findMany();
+    const r: Record<string, string> = {};
+    s.forEach((x) => { r[x.key] = x.value; });
+    return r;
+  } catch { return {}; }
+}
+
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const settings = await getSettings();
+  const siteTitle = settings.siteTitle || 'MasterStrap';
+
+  let product: any = null;
+  try {
+    const rows = await prisma.$queryRawUnsafe(
+      `SELECT name, description, "metaTitle", "metaDesc", images, price, "comparePrice", stock, sku, category, material, slug FROM products WHERE slug = $1 AND "isActive" = true LIMIT 1`,
+      params.slug
+    );
+    product = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+  } catch {
+    // Database may not be available during build
+  }
+
+  if (!product) {
+    return {
+      title: `Not Found | ${siteTitle}`,
+      description: 'This product could not be found.',
+    };
+  }
+
+  const title = product.metaTitle || product.name;
+  const description = product.metaDesc || product.description || `Buy ${product.name} at ${siteTitle}`;
+  const images = Array.isArray(product.images) && product.images.length > 0 ? product.images : [];
+
+  return {
+    title: `${title} | ${siteTitle}`,
+    description,
+    keywords: [product.category, product.material, 'watch strap', 'watch band'].filter(Boolean),
+    openGraph: {
+      title: `${title} | ${siteTitle}`,
+      description,
+      type: 'website',
+      images: images.length > 0 ? images.slice(0, 4) : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${title} | ${siteTitle}`,
+      description,
+      images: images.length > 0 ? [images[0]] : [],
+    },
+    alternates: {
+      canonical: `/products/${product.slug}/`,
+    },
+  };
+}
 
 export default async function ProductPage({ params }: { params: { slug: string } }) {
   let product: any;
@@ -73,7 +131,38 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const reviewCount = approvedReviews.length;
 
   return (
-    <div className="min-h-screen bg-white">
+    <>
+      {/* JSON-LD Product Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            name: serializedProduct.name,
+            image: serializedProduct.images || [],
+            description: serializedProduct.description,
+            sku: serializedProduct.sku,
+            brand: { '@type': 'Brand', name: 'MasterStrap' },
+            offers: {
+              '@type': 'Offer',
+              url: `https://strapstore-shop.vercel.app/products/${serializedProduct.slug}/`,
+              priceCurrency: 'USD',
+              price: formatPrice(serializedProduct.price),
+              availability: serializedProduct.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+              itemCondition: 'https://schema.org/NewCondition',
+            },
+            ...(reviewCount > 0 ? {
+              aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: String(avgRating),
+                reviewCount: String(reviewCount),
+              },
+            } : {}),
+          }),
+        }}
+      />
+      <div className="min-h-screen bg-white">
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 py-4">
         <Link href="/products/" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors">
@@ -230,5 +319,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
         <ProductReviews productId={serializedProduct.id} />
       </div>
     </div>
+    </>
   );
 }

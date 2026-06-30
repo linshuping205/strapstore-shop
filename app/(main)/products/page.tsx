@@ -4,7 +4,39 @@ import { Package } from 'lucide-react'
 import type { Product } from '@/types'
 import { serializeProducts } from '@/lib/utils'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60; // ISR: re-generate every 60 seconds
+
+async function getSettings() {
+  try {
+    const s = await prisma.settings.findMany()
+    const r: Record<string, string> = {}
+    s.forEach((x) => { r[x.key] = x.value })
+    return r
+  } catch { return {} }
+}
+
+export async function generateMetadata() {
+  const settings = await getSettings()
+  const siteTitle = settings.siteTitle || 'MasterStrap'
+  return {
+    title: `All Products | ${siteTitle}`,
+    description: `Premium watch straps crafted from the finest materials. Browse the full collection at ${siteTitle}.`,
+    keywords: ['watch straps', 'watch bands', 'leather strap', 'premium accessories', 'MasterStrap'],
+    openGraph: {
+      title: `All Products | ${siteTitle}`,
+      description: `Premium watch straps crafted from the finest materials. Browse the full collection at ${siteTitle}.`,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `All Products | ${siteTitle}`,
+      description: `Premium watch straps crafted from the finest materials. Browse the full collection at ${siteTitle}.`,
+    },
+    alternates: {
+      canonical: '/products/',
+    },
+  }
+}
 
 export default async function ProductsPage() {
   let products: Product[] = []
@@ -12,7 +44,8 @@ export default async function ProductsPage() {
   try {
     const rawProducts = await prisma.product.findMany({
       where: { isActive: true },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      take: 200, // cap at 200 to prevent excessive SSR payload
     })
     products = serializeProducts(rawProducts)
   } catch {
