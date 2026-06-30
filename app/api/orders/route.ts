@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { errorResponse, successResponse, handlePrismaError } from '@/lib/api';
+import { rateLimit, getRateLimitInfo, tooManyRequestsResponse } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,21 +23,53 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(order || null);
     }
 
-    const orders = await prisma.order.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: {
-        items: {
-          include: { product: true },
+    // Pagination for admin orders listing
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      prisma.order.findMany({
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          total: true,
+          status: true,
+          createdAt: true,
+          stripeSessionId: true,
+          _count: { select: { items: true } },
         },
+      }),
+      prisma.order.count(),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      data: orders,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
     });
-    return NextResponse.json(orders);
   } catch {
     return errorResponse('Database error');
   }
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 5 orders per minute per IP
+  const ip = getClientIp(request);
+  if (!rateLimit(ip, 5, 60000)) {
+    const info = getRateLimitInfo(ip, 5, 60000);
+    return tooManyRequestsResponse(info.resetAt);
+  }
+
   try {
     const body = await request.json();
 
