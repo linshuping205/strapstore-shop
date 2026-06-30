@@ -3,11 +3,6 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-// In-memory cache for settings (suitable for serverless, per-instance)
-let cachedSettings: Record<string, string> | null = null;
-let cacheExpiresAt = 0;
-const CACHE_TTL_MS = 300_000; // 5 minutes
-
 async function ensureSettingsTable() {
   try {
     await prisma.$queryRaw`SELECT 1 FROM "settings" LIMIT 1`;
@@ -29,15 +24,6 @@ async function ensureSettingsTable() {
 
 export async function GET() {
   try {
-    // Serve from cache if still valid
-    if (cachedSettings && Date.now() < cacheExpiresAt) {
-      return NextResponse.json(cachedSettings, {
-        headers: {
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
-        },
-      });
-    }
-
     await ensureSettingsTable();
     const settings = await prisma.settings.findMany();
     const result: Record<string, string> = {};
@@ -45,13 +31,9 @@ export async function GET() {
       result[s.key] = s.value;
     });
 
-    // Update cache
-    cachedSettings = result;
-    cacheExpiresAt = Date.now() + CACHE_TTL_MS;
-
     return NextResponse.json(result, {
       headers: {
-        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
+        'Cache-Control': 'no-store, max-age=0',
       },
     });
   } catch (error: any) {
@@ -83,10 +65,6 @@ export async function PUT(request: NextRequest) {
         })
       )
     );
-
-    // Invalidate cache after update
-    cachedSettings = null;
-    cacheExpiresAt = 0;
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

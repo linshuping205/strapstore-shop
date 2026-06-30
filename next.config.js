@@ -36,7 +36,7 @@ const nextConfig = {
       {
         source: '/api/settings',
         headers: [
-          { key: 'Cache-Control', value: 'public, s-maxage=300, stale-while-revalidate=60' },
+          { key: 'Cache-Control', value: 'no-store, max-age=0' },
         ],
       },
       {
