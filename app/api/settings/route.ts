@@ -66,6 +66,14 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const keys = Object.keys(body);
 
+    // Validate tagline
+    if (body.tagline !== undefined && String(body.tagline).trim().length < 3) {
+      return NextResponse.json({ error: 'Tagline must be at least 3 characters' }, { status: 400 });
+    }
+    if (body.siteTitle !== undefined && String(body.siteTitle).trim().length < 2) {
+      return NextResponse.json({ error: 'Site title must be at least 2 characters' }, { status: 400 });
+    }
+
     await prisma.$transaction(
       keys.map((key) =>
         prisma.settings.upsert({

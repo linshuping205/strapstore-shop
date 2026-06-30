@@ -40,7 +40,8 @@ async function getSettings() {
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
   const siteTitle = settings.siteTitle || 'MasterStrap';
-  const tagline = settings.tagline || 'Premium Watch Straps & Bands';
+  const rawTagline = settings.tagline || 'Premium Watch Straps & Bands';
+  const tagline = rawTagline.trim().length >= 3 ? rawTagline : 'Premium Watch Straps & Bands';
   const siteIcon = settings.siteIcon || '';
 
   const metadata: Metadata = {

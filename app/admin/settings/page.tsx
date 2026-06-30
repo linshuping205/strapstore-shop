@@ -45,6 +45,15 @@ export default function SettingsPage() {
   }, [loadSettings]);
 
   const handleSave = async () => {
+    // Validate tagline
+    if ((form.tagline || '').trim().length < 3) {
+      alert('Tagline must be at least 3 characters long');
+      return;
+    }
+    if ((form.siteTitle || '').trim().length < 2) {
+      alert('Site title must be at least 2 characters long');
+      return;
+    }
     setSaving(true);
     setSaved(false);
     try {
@@ -56,6 +65,9 @@ export default function SettingsPage() {
       if (res.ok) {
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Failed to save settings');
       }
     } catch (e) {
       console.error('Failed to save settings:', e);
@@ -219,6 +231,11 @@ export default function SettingsPage() {
           <p className="text-sm text-gray-500 mb-3">
             A short description that appears below your site title in the header and SEO descriptions.
           </p>
+          {(form.tagline || '').trim().length > 0 && (form.tagline || '').trim().length < 3 && (
+            <p className="text-xs text-red-600 mb-2">
+              ⚠️ Current tagline is too short (min 3 characters). SEO title will use the default fallback until fixed.
+            </p>
+          )}
           <input
             type="text"
             value={form.tagline}
