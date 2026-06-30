@@ -3,6 +3,9 @@ import Link from 'next/link';
 export const metadata = {
   title: 'Terms of Service | MasterStrap',
   description: 'Terms and conditions for using MasterStrap website and services.',
+  alternates: {
+    canonical: '/terms/',
+  },
 };
 
 export default function TermsPage() {

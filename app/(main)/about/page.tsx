@@ -5,6 +5,9 @@ import { Award, Heart, Leaf, Globe, Clock, Shield } from 'lucide-react';
 export const metadata = {
   title: 'About Us | MasterStrap',
   description: 'Handcrafted leather watch straps made with Italian vegetable-tanned leather. Discover our story, craftsmanship, and commitment to quality.',
+  alternates: {
+    canonical: '/about/',
+  },
 };
 
 const values = [

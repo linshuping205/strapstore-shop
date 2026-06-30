@@ -71,9 +71,6 @@ export async function generateMetadata(): Promise<Metadata> {
         'max-snippet': -1,
       },
     },
-    alternates: {
-      canonical: '/',
-    },
     verification: {
       google: 'your-google-verification-code',
     },

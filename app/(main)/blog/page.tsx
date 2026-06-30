@@ -24,6 +24,9 @@ export async function generateMetadata() {
       type: 'website',
     },
     twitter: { card: 'summary_large_image' },
+    alternates: {
+      canonical: '/blog/',
+    },
   };
 }
 

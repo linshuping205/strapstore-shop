@@ -3,6 +3,9 @@ import { Mail, MapPin, Clock, MessageCircle } from 'lucide-react';
 export const metadata = {
   title: 'Contact Us | MasterStrap',
   description: 'Get in touch with MasterStrap. We are here to help with orders, product questions, and custom requests.',
+  alternates: {
+    canonical: '/contact/',
+  },
 };
 
 const contactInfo = [

@@ -3,6 +3,9 @@ import Link from 'next/link';
 export const metadata = {
   title: 'Privacy Policy | MasterStrap',
   description: 'How MasterStrap collects, uses, and protects your personal information.',
+  alternates: {
+    canonical: '/privacy/',
+  },
 };
 
 export default function PrivacyPage() {

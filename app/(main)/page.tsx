@@ -38,6 +38,37 @@ async function getLatestPosts() {
   }
 }
 
+async function getSettings() {
+  try {
+    const settings = await prisma.settings.findMany();
+    const result: Record<string, string> = {};
+    settings.forEach((s) => { result[s.key] = s.value; });
+    return result;
+  } catch { return {}; }
+}
+
+export async function generateMetadata() {
+  const settings = await getSettings();
+  const siteTitle = settings.siteTitle || 'MasterStrap';
+  const tagline = settings.tagline || 'Premium Watch Straps & Bands';
+  return {
+    title: `${siteTitle} | ${tagline}`,
+    description: `Discover premium handcrafted watch straps at ${siteTitle}. Italian leather, rubber sport bands, woven nylon, and exotic calfskin straps. Free worldwide shipping.`,
+    keywords: ['watch strap', 'watch band', 'leather strap', 'rubber strap', 'nylon strap', 'watch accessories', 'luxury watch band', 'handcrafted strap'],
+    openGraph: {
+      title: `${siteTitle} | ${tagline}`,
+      description: `Premium handcrafted watch straps. Italian leather, rubber, nylon, and exotic calfskin.`,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+    },
+    alternates: {
+      canonical: '/',
+    },
+  };
+}
+
 export default async function HomePage() {
   let products: Product[] = [];
   let posts: Post[] = [];
@@ -70,6 +101,9 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
 
+      <h1 className="sr-only">
+        MasterStrap - Premium Handcrafted Watch Straps, Leather Bands &amp; Luxury Watch Accessories
+      </h1>
       <HeroBanner />
       <Craftsmanship />
 
