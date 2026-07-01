@@ -11,6 +11,46 @@ function checkAuth(request: NextRequest) {
   return null;
 }
 
+async function ensureCouponsTable() {
+  try {
+    await prisma.$queryRaw`SELECT 1 FROM "coupons" LIMIT 1`;
+  } catch (error: any) {
+    if (error.message?.includes('does not exist') || error.code === 'P2021') {
+      await prisma.$executeRaw`
+        CREATE TABLE IF NOT EXISTS "coupons" (
+          "id" TEXT NOT NULL,
+          "code" TEXT NOT NULL,
+          "type" TEXT NOT NULL,
+          "value" DECIMAL(10, 2) NOT NULL,
+          "minAmount" DECIMAL(10, 2),
+          "maxDiscount" DECIMAL(10, 2),
+          "startDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "endDate" TIMESTAMP(3),
+          "maxUses" INTEGER NOT NULL DEFAULT 0,
+          "usedCount" INTEGER NOT NULL DEFAULT 0,
+          "isActive" BOOLEAN NOT NULL DEFAULT true,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT "coupons_pkey" PRIMARY KEY ("id"),
+          CONSTRAINT "coupons_code_key" UNIQUE ("code")
+        )
+      `;
+      // Create index for performance
+      await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "coupons_code_idx" ON "coupons"("code")`;
+      await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "coupons_isActive_idx" ON "coupons"("isActive")`;
+      console.log('Coupons table created');
+    }
+  }
+
+  // Also ensure Order columns exist
+  try {
+    await prisma.$executeRaw`ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "discount" DECIMAL(10, 2)`;
+  } catch { /* ignore */ }
+  try {
+    await prisma.$executeRaw`ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "couponCode" TEXT`;
+  } catch { /* ignore */ }
+}
+
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
@@ -18,6 +58,8 @@ export async function GET(request: NextRequest) {
   if (auth) return auth;
 
   try {
+    await ensureCouponsTable();
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
@@ -56,6 +98,7 @@ export async function POST(request: NextRequest) {
   if (auth) return auth;
 
   try {
+    await ensureCouponsTable();
     const body = await request.json();
 
     if (!body.code || typeof body.code !== 'string' || body.code.trim().length < 3) {
@@ -100,6 +143,7 @@ export async function PATCH(request: NextRequest) {
   if (auth) return auth;
 
   try {
+    await ensureCouponsTable();
     const body = await request.json();
     const { id, ...data } = body;
 

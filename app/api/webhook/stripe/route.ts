@@ -3,6 +3,38 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendOrderConfirmation } from '@/lib/email';
 
+async function ensureCouponsTable() {
+  try {
+    await prisma.$queryRaw`SELECT 1 FROM "coupons" LIMIT 1`;
+  } catch (error: any) {
+    if (error.message?.includes('does not exist') || error.code === 'P2021') {
+      await prisma.$executeRaw`
+        CREATE TABLE IF NOT EXISTS "coupons" (
+          "id" TEXT NOT NULL,
+          "code" TEXT NOT NULL,
+          "type" TEXT NOT NULL,
+          "value" DECIMAL(10, 2) NOT NULL,
+          "minAmount" DECIMAL(10, 2),
+          "maxDiscount" DECIMAL(10, 2),
+          "startDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "endDate" TIMESTAMP(3),
+          "maxUses" INTEGER NOT NULL DEFAULT 0,
+          "usedCount" INTEGER NOT NULL DEFAULT 0,
+          "isActive" BOOLEAN NOT NULL DEFAULT true,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT "coupons_pkey" PRIMARY KEY ("id"),
+          CONSTRAINT "coupons_code_key" UNIQUE ("code")
+        )
+      `;
+      await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "coupons_code_idx" ON "coupons"("code")`;
+      await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "coupons_isActive_idx" ON "coupons"("isActive")`;
+    }
+  }
+  try { await prisma.$executeRaw`ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "discount" DECIMAL(10, 2)`; } catch { /* ignore */ }
+  try { await prisma.$executeRaw`ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "couponCode" TEXT`; } catch { /* ignore */ }
+}
+
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
@@ -40,6 +72,8 @@ export async function POST(request: Request) {
     if (!metadata) {
       return NextResponse.json({ received: true });
     }
+
+    await ensureCouponsTable();
 
     const items = JSON.parse(metadata.items || '[]');
     const email = metadata.email || session.customer_details?.email || 'unknown@example.com';
