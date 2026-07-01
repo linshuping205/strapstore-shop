@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import React from 'react';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
@@ -133,37 +134,38 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const reviewCount = approvedReviews.length;
 
   return (
-    <>
+    <div>
       {/* JSON-LD Product Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'Product',
-            name: serializedProduct.name,
-            image: serializedProduct.images || [],
-            description: serializedProduct.description,
-            sku: serializedProduct.sku,
-            brand: { '@type': 'Brand', name: 'MasterStrap' },
-            offers: {
-              '@type': 'Offer',
-              url: `https://strapstore-shop.vercel.app/products/${serializedProduct.slug}/`,
-              priceCurrency: 'USD',
-              price: formatPrice(serializedProduct.price),
-              availability: serializedProduct.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-              itemCondition: 'https://schema.org/NewCondition',
+      {(() => {
+        const jsonLd = {
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: serializedProduct.name,
+          image: serializedProduct.images || [],
+          description: serializedProduct.description,
+          sku: serializedProduct.sku,
+          brand: { '@type': 'Brand', name: 'MasterStrap' },
+          offers: {
+            '@type': 'Offer',
+            url: `https://strapstore-shop.vercel.app/products/${serializedProduct.slug}/`,
+            priceCurrency: 'USD',
+            price: formatPrice(serializedProduct.price),
+            availability: serializedProduct.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            itemCondition: 'https://schema.org/NewCondition',
+          },
+          ...(reviewCount > 0 ? {
+            aggregateRating: {
+              '@type': 'AggregateRating',
+              ratingValue: String(avgRating),
+              reviewCount: String(reviewCount),
             },
-            ...(reviewCount > 0 ? {
-              aggregateRating: {
-                '@type': 'AggregateRating',
-                ratingValue: String(avgRating),
-                reviewCount: String(reviewCount),
-              },
-            } : {}),
-          }),
-        }}
-      />
+          } : {} as any),
+        };
+        return React.createElement('script', {
+          type: 'application/ld+json',
+          dangerouslySetInnerHTML: { __html: JSON.stringify(jsonLd) },
+        });
+      })()}
       <div className="min-h-screen bg-white">
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 py-4">
@@ -375,6 +377,5 @@ export default async function ProductPage({ params }: { params: { slug: string }
         <ProductReviews productId={serializedProduct.id} />
       </div>
     </div>
-    </>
   );
 }
