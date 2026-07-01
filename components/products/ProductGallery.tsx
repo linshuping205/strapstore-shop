@@ -24,7 +24,7 @@ export default function ProductGallery({ images, name, hasDiscount, discount }: 
 
   // Magnifier settings
   const ZOOM_LEVEL = 2.5;
-  const LENS_SIZE = 150;
+  const LENS_SIZE = 500;
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!mainImageRef.current) return;
