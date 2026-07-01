@@ -55,86 +55,84 @@ export default function ProductGallery({ images, name, hasDiscount, discount }: 
   return (
     <div className="flex flex-col gap-4">
       {/* Main Image + Zoom */}
-      <div className="flex gap-4">
-        {/* Main Image with Lens - stays at original size, no zoom on hover */}
-        <div className="relative flex-1">
-          <div
-            ref={mainImageRef}
-            className="relative aspect-square bg-gray-50 rounded-2xl overflow-hidden cursor-crosshair"
-            onMouseEnter={() => setShowZoom(true)}
-            onMouseLeave={() => setShowZoom(false)}
-            onMouseMove={handleMouseMove}
-          >
-            {mainImage ? (
-              <Image
-                src={mainImage}
-                alt={name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 40vw"
-                priority
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-300">
-                <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-            )}
+      <div className="relative w-full">
+        {/* Main Image - stays at original size, never changes */}
+        <div
+          ref={mainImageRef}
+          className="relative aspect-square bg-gray-50 rounded-2xl overflow-hidden"
+          onMouseEnter={() => setShowZoom(true)}
+          onMouseLeave={() => setShowZoom(false)}
+          onMouseMove={handleMouseMove}
+        >
+          {mainImage ? (
+            <Image
+              src={mainImage}
+              alt={name}
+              fill
+              className="object-cover"
+              sizes="(max-width: 1024px) 100vw, 40vw"
+              priority
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-300">
+              <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+          )}
 
-            {/* Lens overlay - only visible on hover */}
-            {showZoom && (
-              <div
-                className="absolute border-2 border-white/80 shadow-lg pointer-events-none"
-                style={{
-                  left: zoomPos.x,
-                  top: zoomPos.y,
-                  width: LENS_SIZE,
-                  height: LENS_SIZE,
-                  background: 'rgba(255,255,255,0.1)',
-                  boxShadow: '0 0 0 9999px rgba(0,0,0,0.05)',
-                }}
-              />
-            )}
+          {/* Lens overlay - only visible on hover, does NOT change main image size */}
+          {showZoom && (
+            <div
+              className="absolute border-2 border-white/80 shadow-lg pointer-events-none"
+              style={{
+                left: zoomPos.x,
+                top: zoomPos.y,
+                width: LENS_SIZE,
+                height: LENS_SIZE,
+                background: 'rgba(255,255,255,0.1)',
+                boxShadow: '0 0 0 9999px rgba(0,0,0,0.05)',
+              }}
+            />
+          )}
 
-            {/* Discount Badge */}
-            {hasDiscount && discount > 0 && (
-              <span className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full">
-                -{discount}%
-              </span>
-            )}
+          {/* Discount Badge */}
+          {hasDiscount && discount > 0 && (
+            <span className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full">
+              -{discount}%
+            </span>
+          )}
 
-            {/* Navigation Arrows */}
-            {totalImages > 1 && (
-              <>
-                <button
-                  onClick={prevImage}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md opacity-0 hover:opacity-100 transition-opacity"
-                >
-                  <ChevronLeft size={20} className="text-gray-700" />
-                </button>
-                <button
-                  onClick={nextImage}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md opacity-0 hover:opacity-100 transition-opacity"
-                >
-                  <ChevronRight size={20} className="text-gray-700" />
-                </button>
-              </>
-            )}
+          {/* Navigation Arrows */}
+          {totalImages > 1 && (
+            <>
+              <button
+                onClick={prevImage}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md opacity-0 hover:opacity-100 transition-opacity"
+              >
+                <ChevronLeft size={20} className="text-gray-700" />
+              </button>
+              <button
+                onClick={nextImage}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md opacity-0 hover:opacity-100 transition-opacity"
+              >
+                <ChevronRight size={20} className="text-gray-700" />
+              </button>
+            </>
+          )}
 
-            {/* Image Counter */}
-            {totalImages > 1 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs px-3 py-1 rounded-full">
-                {activeIndex + 1} / {totalImages}
-              </div>
-            )}
-          </div>
+          {/* Image Counter */}
+          {totalImages > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs px-3 py-1 rounded-full">
+              {activeIndex + 1} / {totalImages}
+            </div>
+          )}
         </div>
 
-        {/* Zoom Result Panel - right side, shows magnified view */}
+        {/* Zoom Result Panel - ABSOLUTE positioned, does NOT affect main image size */}
         {showZoom && mainImage && (
           <div
-            className="hidden lg:block w-[300px] h-[300px] bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 shadow-lg"
+            className="hidden lg:block absolute top-0 left-[calc(100%+16px)] w-[300px] h-[300px] bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 shadow-lg z-10"
             style={{
               backgroundImage: `url(${mainImage})`,
               backgroundRepeat: 'no-repeat',
