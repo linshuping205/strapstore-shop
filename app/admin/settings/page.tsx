@@ -65,12 +65,11 @@ export default function SettingsPage() {
       if (res.ok) {
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
-        // Invalidate all caches so other pages pick up new settings immediately
+        // Invalidate caches so other pages pick up new settings immediately
         localStorage.setItem('site-settings', JSON.stringify(form));
         localStorage.setItem('site-settings-at', String(Date.now()));
         localStorage.setItem('settings-invalidate', String(Date.now()));
-        // Reload from server to confirm
-        await loadSettings();
+        // No need to reload — form already has latest data, just confirmed saved to server
       } else {
         const data = await res.json().catch(() => ({}));
         alert(data.error || 'Failed to save settings');
