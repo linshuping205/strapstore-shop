@@ -5,7 +5,8 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import AddToCartButton from './AddToCartButton';
 import ProductReviews from '@/components/products/ProductReviews';
-import { ArrowLeft, Truck, Shield, RotateCcw, Star, Package } from 'lucide-react';
+import ProductGallery from '@/components/products/ProductGallery';
+import { ArrowLeft, Truck, Shield, RotateCcw, Star, Package, Ruler, CheckCircle } from 'lucide-react';
 import { formatPrice, serializeProduct, serializeProducts } from '@/lib/utils';
 import type { Product } from '@/types';
 
@@ -173,41 +174,15 @@ export default async function ProductPage({ params }: { params: { slug: string }
       {/* Product Detail */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-2 gap-12">
-          {/* Image Gallery */}
-          <div className="space-y-4">
-            <div className="aspect-square bg-gray-50 rounded-2xl overflow-hidden relative">
-              {serializedProduct.images && serializedProduct.images[0] ? (
-                <Image
-                  src={serializedProduct.images[0]}
-                  alt={serializedProduct.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  priority
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-300">
-                  <Package size={64} />
-                </div>
-              )}
-              {hasComparePrice && discount > 0 && (
-                <span className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full">
-                  -{discount}%
-                </span>
-              )}
-            </div>
-            {serializedProduct.images && serializedProduct.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-3">
-                {serializedProduct.images.slice(0, 4).map((img, i) => (
-                  <div key={i} className="aspect-square bg-gray-50 rounded-lg overflow-hidden relative">
-                    <Image src={img} alt={`${serializedProduct.name} ${i + 1}`} fill className="object-cover" sizes="120px" loading="lazy" />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Left: Image Gallery */}
+          <ProductGallery
+            images={serializedProduct.images || []}
+            name={serializedProduct.name}
+            hasDiscount={hasComparePrice}
+            discount={discount}
+          />
 
-          {/* Product Info */}
+          {/* Right: Product Info */}
           <div className="space-y-6">
             <div>
               <p className="text-xs text-accent uppercase tracking-wider font-semibold mb-2">{serializedProduct.category}</p>
@@ -274,6 +249,100 @@ export default async function ProductPage({ params }: { params: { slug: string }
             )}
 
             <AddToCartButton product={serializedProduct} disabled={serializedProduct.stock <= 0} />
+          </div>
+        </div>
+      </div>
+
+      {/* Product Specs */}
+      <div id="product-specs" className="max-w-7xl mx-auto px-4 py-12 border-t border-gray-100">
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <Ruler size={20} className="text-amber-600" />
+              Product Specifications
+            </h2>
+            <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+              <table className="w-full text-sm">
+                <tbody className="divide-y divide-gray-100">
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium text-gray-600 w-40">Product Name</td>
+                    <td className="px-6 py-4 text-gray-900">{serializedProduct.name}</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium text-gray-600">SKU</td>
+                    <td className="px-6 py-4 text-gray-900 font-mono">{serializedProduct.sku || 'N/A'}</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium text-gray-600">Category</td>
+                    <td className="px-6 py-4 text-gray-900">{serializedProduct.category}</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium text-gray-600">Material</td>
+                    <td className="px-6 py-4 text-gray-900">{serializedProduct.material || 'N/A'}</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium text-gray-600">Price</td>
+                    <td className="px-6 py-4 text-gray-900 font-semibold">${formatPrice(serializedProduct.price)}</td>
+                  </tr>
+                  {hasComparePrice && (
+                    <tr className="hover:bg-gray-50">
+                      <td className="px-6 py-4 font-medium text-gray-600">Compare Price</td>
+                      <td className="px-6 py-4 text-gray-400 line-through">${formatPrice(serializedProduct.comparePrice)}</td>
+                    </tr>
+                  )}
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium text-gray-600">Stock</td>
+                    <td className="px-6 py-4">
+                      <span className={serializedProduct.stock > 0 ? 'text-green-600 font-medium' : 'text-red-600'}>
+                        {serializedProduct.stock > 0 ? `${serializedProduct.stock} in stock` : 'Out of stock'}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium text-gray-600">Shipping</td>
+                    <td className="px-6 py-4 text-gray-900 flex items-center gap-2">
+                      <CheckCircle size={14} className="text-green-500" />
+                      Free Shipping Worldwide
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium text-gray-600">Returns</td>
+                    <td className="px-6 py-4 text-gray-900 flex items-center gap-2">
+                      <CheckCircle size={14} className="text-green-500" />
+                      30-Day Money Back Guarantee
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="lg:col-span-1">
+            <div className="bg-amber-50 rounded-xl border border-amber-100 p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">Why Choose MasterStrap?</h3>
+              <ul className="space-y-3 text-sm text-gray-600">
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                  Handcrafted from premium full-grain leather
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                  Stainless steel buckle hardware
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                  Compatible with all major watch brands
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                  Free shipping on all orders
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                  30-day hassle-free returns
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
