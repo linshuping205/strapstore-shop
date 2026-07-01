@@ -134,7 +134,7 @@ export default function ProductGallery({ images, name, hasDiscount, discount }: 
 
         {/* Zoom Result Panel - ABSOLUTE positioned, follows mouse position */}
         {showZoom && mainImage && (
-          <div className="hidden lg:block absolute top-0 left-[calc(100%+16px)] w-[800px] h-[800px] bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 shadow-lg z-10">
+          <div className="hidden lg:block absolute top-0 left-[calc(100%+16px)] w-[700px] h-[700px] bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 shadow-lg z-10">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={mainImage}
