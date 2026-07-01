@@ -41,4 +41,51 @@
     opacity: 1;
     transform: translateY(0);
   }
+
+  /* Product description rich text content styles */
+  .product-description h1 {
+    @apply text-2xl font-bold text-gray-900 mt-6 mb-3;
+  }
+  .product-description h2 {
+    @apply text-xl font-semibold text-gray-800 mt-5 mb-2;
+  }
+  .product-description p {
+    @apply mb-4 leading-relaxed;
+  }
+  .product-description ul {
+    @apply list-disc pl-5 mb-4 space-y-1;
+  }
+  .product-description ol {
+    @apply list-decimal pl-5 mb-4 space-y-1;
+  }
+  .product-description li {
+    @apply text-gray-600;
+  }
+  .product-description img {
+    @apply rounded-lg max-w-full h-auto my-4;
+  }
+  .product-description a {
+    @apply text-amber-600 underline hover:text-amber-700;
+  }
+  .product-description blockquote {
+    @apply border-l-4 border-amber-200 pl-4 italic text-gray-500 my-4;
+  }
+  .product-description pre {
+    @apply bg-gray-100 rounded-lg p-4 overflow-x-auto text-sm font-mono my-4;
+  }
+  .product-description strong {
+    @apply font-bold text-gray-800;
+  }
+  .product-description em {
+    @apply italic;
+  }
+  .product-description u {
+    @apply underline;
+  }
+
+  /* Editor placeholder */
+  .editor-content:empty::before {
+    content: var(--editor-placeholder, 'Start typing...');
+    @apply text-gray-400 pointer-events-none;
+  }
 }

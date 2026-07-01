@@ -210,7 +210,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
               )}
             </div>
 
-            <p className="text-gray-600 leading-relaxed">{serializedProduct.description}</p>
+            <div
+              className="text-gray-600 leading-relaxed product-description"
+              dangerouslySetInnerHTML={{ __html: serializedProduct.description || '' }}
+            />
 
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="flex items-center gap-2 text-gray-600">

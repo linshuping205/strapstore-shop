@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import ProductDescriptionEditor from '@/components/admin/ProductDescriptionEditor';
 import {
   ArrowLeft, Save, Trash2, Plus, X, ImageIcon, CheckCircle, Upload, Eye, Loader2
 } from 'lucide-react';
@@ -649,13 +650,13 @@ export default function ProductEditPage() {
                   </div>
 
                   <div>
-                    <textarea
+                    <ProductDescriptionEditor
                       value={form.description}
-                      onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                      rows={8}
-                      placeholder="Describe your product features, materials, usage scenarios, dimensions, care instructions..."
-                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400 resize-y"
+                      onChange={(html) => setForm((p) => ({ ...p, description: html }))}
                     />
+                    <p className="text-xs text-gray-400 mt-2">
+                      Supports formatting, images, links, lists, and more. Images will be shown on the product detail page.
+                    </p>
                   </div>
 
                   <div className="border-b border-gray-100 pb-4 pt-2">
