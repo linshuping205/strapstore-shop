@@ -105,6 +105,7 @@ export function serializeProduct(product: any): Product {
   }
   return {
     ...product,
+    hasVariants: product.hasVariants ?? false,
     price: typeof product.price === 'object' && product.price !== null && typeof product.price.toNumber === 'function'
       ? product.price.toNumber()
       : Number(product.price ?? 0),
@@ -115,6 +116,18 @@ export function serializeProduct(product: any): Product {
       : null,
     images: product.images || [],
     tags: product.tags || [],
+    variants: product.variants?.map((v: any) => ({
+      ...v,
+      price: typeof v.price === 'object' && v.price !== null && typeof v.price.toNumber === 'function'
+        ? v.price.toNumber()
+        : Number(v.price ?? 0),
+      comparePrice: v.comparePrice
+        ? (typeof v.comparePrice === 'object' && v.comparePrice !== null && typeof v.comparePrice.toNumber === 'function'
+          ? v.comparePrice.toNumber()
+          : Number(v.comparePrice))
+        : null,
+      images: v.images || [],
+    })) || [],
     createdAt: product.createdAt instanceof Date ? product.createdAt.toISOString() : product.createdAt,
     updatedAt: product.updatedAt instanceof Date ? product.updatedAt.toISOString() : product.updatedAt,
   };

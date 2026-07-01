@@ -16,7 +16,13 @@ export async function GET(request: NextRequest) {
   try {
     const products = await prisma.product.findMany({
       orderBy: { createdAt: 'desc' },
-      take: 200, // cap to prevent excessive payload
+      take: 200,
+      include: {
+        variants: {
+          where: { isActive: true },
+          select: { price: true },
+        },
+      },
     });
     return NextResponse.json(products);
   } catch {
@@ -55,7 +61,9 @@ export async function POST(request: NextRequest) {
           ? body.images.split(',').map((s: string) => s.trim()).filter(Boolean)
           : []);
 
-    const data = {
+    const hasVariants = Array.isArray(body.variants) && body.variants.length > 0;
+
+    const data: any = {
       slug: body.slug.trim(),
       name: body.name.trim(),
       description: typeof body.description === 'string' ? body.description.trim() : '',
@@ -70,9 +78,26 @@ export async function POST(request: NextRequest) {
       metaDesc: typeof body.metaDesc === 'string' ? body.metaDesc.trim() : null,
       tags: [],
       isActive: true,
+      hasVariants,
     };
 
-    const product = await prisma.product.create({ data });
+    if (hasVariants) {
+      data.variants = {
+        create: body.variants.map((v: any) => ({
+          color: v.color || '',
+          colorCode: v.colorCode || null,
+          size: v.size || '',
+          sku: v.sku || `SKU-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          price: parseFloat(v.price) || 0,
+          comparePrice: v.comparePrice ? parseFloat(v.comparePrice) : null,
+          stock: parseInt(v.stock) || 0,
+          images: Array.isArray(v.images) ? v.images : [],
+          isActive: v.isActive !== false,
+        })),
+      };
+    }
+
+    const product = await prisma.product.create({ data, include: { variants: true } });
     return successResponse(product, 201);
   } catch (error) {
     console.error('Create product error:', error);

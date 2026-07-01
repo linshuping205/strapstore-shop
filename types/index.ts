@@ -1,3 +1,19 @@
+export interface ProductVariant {
+  id: string;
+  productId: string;
+  color: string;
+  colorCode?: string | null;
+  size: string;
+  sku: string;
+  price: number;
+  comparePrice: number | null;
+  stock: number;
+  images: string[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Product {
   id: string;
   slug: string;
@@ -12,10 +28,12 @@ export interface Product {
   stock: number;
   sku: string | null;
   isActive: boolean;
+  hasVariants: boolean;
   metaTitle: string | null;
   metaDesc: string | null;
   createdAt: string;
   updatedAt: string;
+  variants?: ProductVariant[];
 }
 
 export interface ProductForm {
@@ -95,6 +113,7 @@ export interface OrderItem {
   id: string;
   orderId: string;
   productId: string;
+  variantId: string | null;
   quantity: number;
   price: number;
   product: Product;
@@ -134,11 +153,15 @@ export interface ApiResponse<T> {
 
 export interface CartItem {
   id: string;
+  productId: string;
   name: string;
+  variantName?: string;
   price: number;
   image: string;
   quantity: number;
   slug: string;
+  color?: string;
+  size?: string;
 }
 
 export interface CartStore {

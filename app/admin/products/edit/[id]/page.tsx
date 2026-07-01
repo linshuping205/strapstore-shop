@@ -26,6 +26,19 @@ export default function ProductEditPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [hasVariants, setHasVariants] = useState(false);
+  const [variants, setVariants] = useState<{
+    id?: string;
+    color: string;
+    colorCode: string;
+    size: string;
+    sku: string;
+    price: string;
+    comparePrice: string;
+    stock: string;
+    images: string[];
+    isActive: boolean;
+  }[]>([]);
 
   const [form, setForm] = useState({
     name: '',
@@ -64,6 +77,21 @@ export default function ProductEditPage() {
           metaDesc: product.metaDesc || '',
         });
         setImages(product.images || []);
+        setHasVariants(product.hasVariants || false);
+        setVariants(
+          product.variants?.map((v: any) => ({
+            id: v.id,
+            color: v.color || '',
+            colorCode: v.colorCode || '',
+            size: v.size || '',
+            sku: v.sku || '',
+            price: String(v.price || ''),
+            comparePrice: String(v.comparePrice || ''),
+            stock: String(v.stock || ''),
+            images: v.images || [],
+            isActive: v.isActive !== false,
+          })) || []
+        );
       }
     } catch (e) {
       console.error('Failed to load product:', e);
@@ -104,6 +132,21 @@ export default function ProductEditPage() {
       comparePrice: form.comparePrice ? Number(form.comparePrice) : null,
       stock: Number(form.stock),
       images,
+      hasVariants,
+      variants: hasVariants
+        ? variants.map((v) => ({
+            ...(v.id ? { id: v.id } : {}),
+            color: v.color,
+            colorCode: v.colorCode || null,
+            size: v.size,
+            sku: v.sku,
+            price: Number(v.price),
+            comparePrice: v.comparePrice ? Number(v.comparePrice) : null,
+            stock: Number(v.stock),
+            images: v.images,
+            isActive: v.isActive,
+          }))
+        : [],
     };
 
     const url = isNew ? '/api/products' : `/api/products/${productId}`;
@@ -534,6 +577,132 @@ export default function ProductEditPage() {
                           </p>
                         </div>
                       </div>
+                    </div>
+
+                    {/* Variants Management */}
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 mt-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-900">Product Variants</h4>
+                          <p className="text-xs text-gray-400">Enable if this product has multiple colors or sizes</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={hasVariants}
+                            onChange={(e) => setHasVariants(e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                        </label>
+                      </div>
+
+                      {hasVariants && (
+                        <div className="space-y-3">
+                          {variants.map((variant, index) => (
+                            <div key={index} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-gray-700">Variant #{index + 1}</span>
+                                <button
+                                  onClick={() => setVariants((prev) => prev.filter((_, i) => i !== index))}
+                                  className="text-xs text-red-500 hover:text-red-600"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <input
+                                  placeholder="Color (e.g. Black)"
+                                  value={variant.color}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setVariants((prev) => prev.map((v, i) => i === index ? { ...v, color: val } : v));
+                                  }}
+                                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400"
+                                />
+                                <input
+                                  placeholder="Color Hex (#000000)"
+                                  value={variant.colorCode}
+                                  onChange={(e) => setVariants((prev) => prev.map((v, i) => i === index ? { ...v, colorCode: e.target.value } : v))}
+                                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400"
+                                />
+                                <input
+                                  placeholder="Size (e.g. 20mm)"
+                                  value={variant.size}
+                                  onChange={(e) => setVariants((prev) => prev.map((v, i) => i === index ? { ...v, size: e.target.value } : v))}
+                                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400"
+                                />
+                                <input
+                                  placeholder="SKU"
+                                  value={variant.sku}
+                                  onChange={(e) => setVariants((prev) => prev.map((v, i) => i === index ? { ...v, sku: e.target.value } : v))}
+                                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400"
+                                />
+                                <div className="relative">
+                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="Price"
+                                    value={variant.price}
+                                    onChange={(e) => setVariants((prev) => prev.map((v, i) => i === index ? { ...v, price: e.target.value } : v))}
+                                    className="w-full pl-7 pr-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400"
+                                  />
+                                </div>
+                                <div className="relative">
+                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="Compare Price"
+                                    value={variant.comparePrice}
+                                    onChange={(e) => setVariants((prev) => prev.map((v, i) => i === index ? { ...v, comparePrice: e.target.value } : v))}
+                                    className="w-full pl-7 pr-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400"
+                                  />
+                                </div>
+                                <input
+                                  type="number"
+                                  placeholder="Stock"
+                                  value={variant.stock}
+                                  onChange={(e) => setVariants((prev) => prev.map((v, i) => i === index ? { ...v, stock: e.target.value } : v))}
+                                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400"
+                                />
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={variant.isActive}
+                                    onChange={(e) => setVariants((prev) => prev.map((v, i) => i === index ? { ...v, isActive: e.target.checked } : v))}
+                                    className="w-4 h-4 text-amber-600 rounded border-gray-300"
+                                  />
+                                  <span className="text-sm text-gray-600">Active</span>
+                                </label>
+                              </div>
+                              {/* Variant images - simplified: reuse main upload or show image count */}
+                              {variant.images.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                  {variant.images.map((img, imgIdx) => (
+                                    <div key={imgIdx} className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
+                                      <img src={img} alt="" className="w-full h-full object-cover" />
+                                      <button
+                                        onClick={() => setVariants((prev) => prev.map((v, i) => i === index ? { ...v, images: v.images.filter((_, ji) => ji !== imgIdx) } : v))}
+                                        className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/50 text-white rounded-full text-[10px] flex items-center justify-center hover:bg-black/70"
+                                      >
+                                        ×
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                          <button
+                            onClick={() => setVariants((prev) => [...prev, { color: '', colorCode: '', size: '', sku: `SKU-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, price: '', comparePrice: '', stock: '', images: [], isActive: true }])}
+                            className="w-full py-2 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-amber-400 hover:text-amber-600 transition-colors"
+                          >
+                            + Add Variant
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 

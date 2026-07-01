@@ -3,9 +3,9 @@ import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
-import AddToCartButton from './AddToCartButton';
 import ProductReviews from '@/components/products/ProductReviews';
 import ProductGallery from '@/components/products/ProductGallery';
+import ProductVariantSelector from './ProductVariantSelector';
 import { ArrowLeft, Truck, Shield, RotateCcw, Star, Package, Ruler, CheckCircle } from 'lucide-react';
 import { formatPrice, serializeProduct, serializeProducts } from '@/lib/utils';
 import type { Product } from '@/types';
@@ -77,6 +77,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
   try {
     product = await prisma.product.findUnique({
       where: { slug: params.slug },
+      include: { variants: { orderBy: [{ color: 'asc' }, { size: 'asc' }] } },
     });
   } catch (err: any) {
     console.error('ProductPage DB error:', err?.message || err);
@@ -203,23 +204,12 @@ export default async function ProductPage({ params }: { params: { slug: string }
               </div>
             </div>
 
-            <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-bold text-gray-900">${formatPrice(serializedProduct.price)}</span>
-              {hasComparePrice && (
-                <span className="text-xl text-gray-400 line-through">${formatPrice(serializedProduct.comparePrice)}</span>
-              )}
-            </div>
-
             <div
               className="text-gray-600 leading-relaxed product-description"
               dangerouslySetInnerHTML={{ __html: serializedProduct.description || '' }}
             />
 
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="flex items-center gap-2 text-gray-600">
-                <Package size={16} className="text-accent" />
-                SKU: {serializedProduct.sku || 'N/A'}
-              </div>
               <div className="flex items-center gap-2 text-gray-600">
                 <Shield size={16} className="text-accent" />
                 Material: {serializedProduct.material || 'N/A'}
@@ -234,13 +224,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
               </div>
             </div>
 
-            <div className="flex items-center gap-2 text-sm">
-              <span className={`w-2.5 h-2.5 rounded-full ${serializedProduct.stock > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
-              <span className={serializedProduct.stock > 0 ? 'text-green-600' : 'text-red-600'}>
-                {serializedProduct.stock > 0 ? `In Stock (${serializedProduct.stock} available)` : 'Out of Stock'}
-              </span>
-            </div>
-
             {serializedProduct.tags && serializedProduct.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {serializedProduct.tags.map((tag) => (
@@ -251,7 +234,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
               </div>
             )}
 
-            <AddToCartButton product={serializedProduct} disabled={serializedProduct.stock <= 0} />
+            <ProductVariantSelector product={serializedProduct} />
+          </div>
           </div>
         </div>
       </div>

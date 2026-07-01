@@ -10,6 +10,7 @@ export async function GET(
   try {
     const product = await prisma.product.findUnique({
       where: { id: params.id },
+      include: { variants: { orderBy: [{ color: 'asc' }, { size: 'asc' }] } },
     });
     if (!product) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
@@ -44,12 +45,34 @@ export async function PUT(
     if (body.stock !== undefined) data.stock = parseInt(body.stock) || 0;
     if (body.sku !== undefined) data.sku = body.sku || null;
     if (body.isActive !== undefined) data.isActive = body.isActive === true;
+    if (body.hasVariants !== undefined) data.hasVariants = body.hasVariants === true;
     if (body.metaTitle !== undefined) data.metaTitle = body.metaTitle || null;
     if (body.metaDesc !== undefined) data.metaDesc = body.metaDesc || null;
+
+    // Handle variants: delete old, create new
+    if (Array.isArray(body.variants)) {
+      await prisma.productVariant.deleteMany({ where: { productId: params.id } });
+      if (body.variants.length > 0) {
+        data.variants = {
+          create: body.variants.map((v: any) => ({
+            color: v.color || '',
+            colorCode: v.colorCode || null,
+            size: v.size || '',
+            sku: v.sku || `SKU-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            price: parseFloat(v.price) || 0,
+            comparePrice: v.comparePrice ? parseFloat(v.comparePrice) : null,
+            stock: parseInt(v.stock) || 0,
+            images: Array.isArray(v.images) ? v.images : [],
+            isActive: v.isActive !== false,
+          })),
+        };
+      }
+    }
 
     const product = await prisma.product.update({
       where: { id: params.id },
       data,
+      include: { variants: true },
     });
     return NextResponse.json(product);
   } catch (error: any) {
