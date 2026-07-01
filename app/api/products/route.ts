@@ -6,12 +6,53 @@ import { getClientIp } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
+async function ensureVariantTables() {
+  try {
+    // Check if hasVariants column exists
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "products" 
+      ADD COLUMN IF NOT EXISTS "hasVariants" BOOLEAN NOT NULL DEFAULT false
+    `);
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "order_items" 
+      ADD COLUMN IF NOT EXISTS "variantId" TEXT
+    `);
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "product_variants" (
+        "id" TEXT NOT NULL,
+        "productId" TEXT NOT NULL,
+        "color" TEXT NOT NULL,
+        "colorCode" TEXT,
+        "size" TEXT NOT NULL,
+        "sku" TEXT NOT NULL,
+        "price" DECIMAL(10,2) NOT NULL,
+        "comparePrice" DECIMAL(10,2),
+        "stock" INTEGER NOT NULL DEFAULT 0,
+        "images" TEXT[] DEFAULT ARRAY[]::TEXT[],
+        "isActive" BOOLEAN NOT NULL DEFAULT true,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL,
+        CONSTRAINT "product_variants_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "product_variants_sku_key" UNIQUE ("sku")
+      )
+    `);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "product_variants_productId_idx" ON "product_variants"("productId")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "product_variants_color_idx" ON "product_variants"("color")`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "product_variants_size_idx" ON "product_variants"("size")`);
+  } catch (e) {
+    console.error('Migration check error:', e);
+  }
+}
+
 export async function GET(request: NextRequest) {
   const ip = getClientIp(request);
   if (!rateLimit(ip, 60, 60000)) {
     const info = getRateLimitInfo(ip, 60, 60000);
     return tooManyRequestsResponse(info.resetAt);
   }
+
+  // Ensure tables exist before query
+  await ensureVariantTables();
 
   try {
     const products = await prisma.product.findMany({
