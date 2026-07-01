@@ -14,7 +14,7 @@ interface ProductGalleryProps {
 export default function ProductGallery({ images, name, hasDiscount, discount }: ProductGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [showZoom, setShowZoom] = useState(false);
-  const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
+  const [zoomPos, setZoomPos] = useState({ x: 0, y: 0, xPercent: 0.5, yPercent: 0.5 });
   const mainImageRef = useRef<HTMLDivElement>(null);
 
   const mainImage = images[activeIndex] || images[0] || '';
@@ -32,12 +32,15 @@ export default function ProductGallery({ images, name, hasDiscount, discount }: 
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    const xPercent = Math.max(0, Math.min(1, x / rect.width));
+    const yPercent = Math.max(0, Math.min(1, y / rect.height));
+
     let lensX = x - LENS_SIZE / 2;
     let lensY = y - LENS_SIZE / 2;
     lensX = Math.max(0, Math.min(rect.width - LENS_SIZE, lensX));
     lensY = Math.max(0, Math.min(rect.height - LENS_SIZE, lensY));
 
-    setZoomPos({ x: lensX, y: lensY });
+    setZoomPos({ x: lensX, y: lensY, xPercent, yPercent });
   }, []);
 
   const prevImage = () => {
@@ -129,17 +132,20 @@ export default function ProductGallery({ images, name, hasDiscount, discount }: 
           )}
         </div>
 
-        {/* Zoom Result Panel - ABSOLUTE positioned, does NOT affect main image size */}
+        {/* Zoom Result Panel - ABSOLUTE positioned, follows mouse position */}
         {showZoom && mainImage && (
-          <div
-            className="hidden lg:block absolute top-0 left-[calc(100%+16px)] w-[300px] h-[300px] bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 shadow-lg z-10"
-            style={{
-              backgroundImage: `url(${mainImage})`,
-              backgroundRepeat: 'no-repeat',
-              backgroundSize: `${100 * ZOOM_LEVEL}%`,
-              backgroundPosition: `${-zoomPos.x * ZOOM_LEVEL}px ${-zoomPos.y * ZOOM_LEVEL}px`,
-            }}
-          />
+          <div className="hidden lg:block absolute top-0 left-[calc(100%+16px)] w-[300px] h-[300px] bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 shadow-lg z-10">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={mainImage}
+              alt="zoom view"
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{
+                transform: `scale(${ZOOM_LEVEL})`,
+                transformOrigin: `${zoomPos.xPercent * 100}% ${zoomPos.yPercent * 100}%`,
+              }}
+            />
+          </div>
         )}
       </div>
 
