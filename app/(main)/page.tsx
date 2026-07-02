@@ -69,6 +69,10 @@ export async function generateMetadata() {
     alternates: {
       canonical: '/',
     },
+    other: {
+      'link:rel:preconnect': 'https://cdn.pixabay.com',
+      'link:rel:dns-prefetch': 'https://cdn.pixabay.com',
+    },
   };
 }
 
