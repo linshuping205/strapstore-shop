@@ -218,28 +218,45 @@ export default function ProductDetailClient({ product, relatedProducts, avgRatin
                       <p className="text-sm font-medium text-gray-700 mb-2">
                         Color: <span className="text-gray-900">{selectedColor}</span>
                       </p>
-                      <div className="flex items-center gap-3">
-                        {colors.map((c) => (
-                          <button
-                            key={c.color}
-                            onClick={() => setSelectedColor(c.color)}
-                            className={`group relative w-10 h-10 rounded-full border-2 transition-all ${
-                              selectedColor === c.color
-                                ? 'border-amber-500 ring-2 ring-amber-200'
-                                : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                            title={c.color}
-                          >
-                            <span className="absolute inset-1 rounded-full" style={{ backgroundColor: c.colorCode || '#ccc' }} />
-                            {selectedColor === c.color && (
-                              <span className="absolute inset-0 flex items-center justify-center">
-                                <svg className="w-4 h-4 text-white drop-shadow" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                              </span>
-                            )}
-                          </button>
-                        ))}
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {colors.map((c) => {
+                          const hasImage = c.images && c.images.length > 0;
+                          return (
+                            <button
+                              key={c.color}
+                              onClick={() => setSelectedColor(c.color)}
+                              className={`group relative overflow-hidden transition-all ${
+                                hasImage
+                                  ? 'w-14 h-14 rounded-lg'
+                                  : 'w-auto min-w-[40px] h-10 px-3 rounded-full'
+                              } border-2 ${
+                                selectedColor === c.color
+                                  ? 'border-amber-500 ring-2 ring-amber-200'
+                                  : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                              title={c.color}
+                            >
+                              {hasImage ? (
+                                <img
+                                  src={c.images![0]}
+                                  alt={c.color}
+                                  className="absolute inset-0 w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="flex items-center justify-center w-full h-full text-xs font-medium text-gray-700">
+                                  {c.color}
+                                </span>
+                              )}
+                              {selectedColor === c.color && (
+                                <span className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                  <svg className="w-5 h-5 text-white drop-shadow" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
