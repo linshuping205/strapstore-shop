@@ -8,10 +8,17 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const product = await prisma.product.findUnique({
+    let product = await prisma.product.findUnique({
       where: { id: params.id },
       include: { variants: { orderBy: [{ color: 'asc' }, { size: 'asc' }] } },
     });
+    // Fallback: try slug if ID not found (admin edit page uses slug in URL)
+    if (!product) {
+      product = await prisma.product.findFirst({
+        where: { slug: params.id },
+        include: { variants: { orderBy: [{ color: 'asc' }, { size: 'asc' }] } },
+      });
+    }
     if (!product) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
@@ -28,6 +35,16 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
+
+    // Find product by ID or slug (admin uses slug in URL)
+    let existing = await prisma.product.findUnique({ where: { id: params.id } });
+    if (!existing) {
+      existing = await prisma.product.findFirst({ where: { slug: params.id } });
+    }
+    if (!existing) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+    const productId = existing.id;
 
     const data: any = {};
     if (body.name !== undefined) data.name = body.name;
@@ -70,7 +87,7 @@ export async function PUT(
     }
 
     const product = await prisma.product.update({
-      where: { id: params.id },
+      where: { id: productId },
       data,
       include: { variants: true },
     });
@@ -92,7 +109,14 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await prisma.product.delete({ where: { id: params.id } });
+    let product = await prisma.product.findUnique({ where: { id: params.id } });
+    if (!product) {
+      product = await prisma.product.findFirst({ where: { slug: params.id } });
+    }
+    if (!product) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+    await prisma.product.delete({ where: { id: product.id } });
     return NextResponse.json({ success: true, message: 'Product deleted' });
   } catch (error: any) {
     console.error('Product DELETE error:', error);
