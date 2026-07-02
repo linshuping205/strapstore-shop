@@ -243,6 +243,43 @@ export default function ProductEditPage() {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleVariantImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, variantIndex: number) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    setUploading(true);
+    const uploadedUrls: string[] = [];
+
+    for (const file of Array.from(files)) {
+      if (file.size > 4 * 1024 * 1024) {
+        alert(`${file.name} exceeds 4MB limit`);
+        continue;
+      }
+      try {
+        const filename = `products/${Date.now()}_${file.name}`;
+        const res = await fetch(`/api/upload?filename=${encodeURIComponent(filename)}`, {
+          method: 'POST',
+          headers: { 'x-admin-auth': 'admin-secret-token-2024' },
+          body: file,
+        });
+        if (res.ok) {
+          const { url } = await res.json();
+          uploadedUrls.push(url);
+        } else {
+          alert(`Failed to upload ${file.name}`);
+        }
+      } catch {
+        alert(`Upload error: ${file.name}`);
+      }
+    }
+
+    if (uploadedUrls.length > 0) {
+      setVariants((prev) => prev.map((v, i) => i === variantIndex ? { ...v, images: [...v.images, ...uploadedUrls] } : v));
+    }
+    setUploading(false);
+    e.target.value = '';
+  };
+
   const setMainImage = (index: number) => {
     if (index === 0) return;
     const newImages = [...images];
@@ -610,6 +647,44 @@ export default function ProductEditPage() {
                                   Remove
                                 </button>
                               </div>
+
+                              {/* Variant Image Upload */}
+                              <div className="flex items-center gap-3">
+                                <label className="flex items-center gap-2 px-3 py-2 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-amber-400 hover:text-amber-600 cursor-pointer transition-colors">
+                                  <Upload size={16} />
+                                  Upload Variant Images
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    className="hidden"
+                                    onChange={(e) => handleVariantImageUpload(e, index)}
+                                    disabled={uploading}
+                                  />
+                                </label>
+                                {variant.images.length > 0 && (
+                                  <span className="text-xs text-gray-400">{variant.images.length} image(s)</span>
+                                )}
+                                {uploading && <Loader2 size={16} className="animate-spin text-gray-400" />}
+                              </div>
+
+                              {/* Variant Images Preview */}
+                              {variant.images.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                  {variant.images.map((img, imgIdx) => (
+                                    <div key={imgIdx} className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200 group">
+                                      <img src={img} alt="" className="w-full h-full object-cover" />
+                                      <button
+                                        onClick={() => setVariants((prev) => prev.map((v, i) => i === index ? { ...v, images: v.images.filter((_, ji) => ji !== imgIdx) } : v))}
+                                        className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/50 text-white rounded-full text-[10px] flex items-center justify-center hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      >
+                                        ×
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 <input
                                   placeholder="Color (e.g. Black)"
@@ -677,22 +752,12 @@ export default function ProductEditPage() {
                                   <span className="text-sm text-gray-600">Active</span>
                                 </label>
                               </div>
-                              {/* Variant images - simplified: reuse main upload or show image count */}
-                              {variant.images.length > 0 && (
-                                <div className="flex flex-wrap gap-2">
-                                  {variant.images.map((img, imgIdx) => (
-                                    <div key={imgIdx} className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
-                                      <img src={img} alt="" className="w-full h-full object-cover" />
-                                      <button
-                                        onClick={() => setVariants((prev) => prev.map((v, i) => i === index ? { ...v, images: v.images.filter((_, ji) => ji !== imgIdx) } : v))}
-                                        className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/50 text-white rounded-full text-[10px] flex items-center justify-center hover:bg-black/70"
-                                      >
-                                        ×
-                                      </button>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
+                              <button
+                                onClick={() => setVariants((prev) => prev.filter((_, i) => i !== index))}
+                                className="text-xs text-red-500 hover:text-red-600"
+                              >
+                                Remove Variant
+                              </button>
                             </div>
                           ))}
                           <button
